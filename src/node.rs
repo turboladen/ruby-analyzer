@@ -10,7 +10,7 @@ use crate::{namespace::Namespace, properties::Properties};
 /// resides in an entire codebase, lends itself more toward lookup in `Vec`-based index (which is
 /// the pattern we use), as opposed to having to traverse a tree or graph.
 ///
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Node {
     pub(crate) id: usize,
     pub(crate) namespace: Namespace,
