@@ -71,7 +71,7 @@ mod tests {
 
     #[test]
     fn parse_valid_ruby_test() {
-        let db = crate::Database::default();
+        let db = crate::db::Database::default();
         let file_uri = PathBuf::from("/tmp/test.rb");
         let code = Rope::from_str("class Foo; end");
 
@@ -90,7 +90,7 @@ mod tests {
 
     #[test]
     fn parse_invalid_ruby_test() {
-        let db = crate::Database::default();
+        let db = crate::db::Database::default();
         let file_uri = PathBuf::from("/tmp/test.rb");
         let code = Rope::from_str("class Foo; ");
 
