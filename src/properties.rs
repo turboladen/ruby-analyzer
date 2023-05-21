@@ -1,7 +1,7 @@
 #[allow(clippy::wildcard_imports)]
 use crate::nodes::*;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Properties {
     Alias(Alias),
     And(And),

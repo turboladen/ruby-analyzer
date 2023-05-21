@@ -1,3 +1,4 @@
+#[allow(clippy::wildcard_imports)]
 use crate::{
     compat::OffsetToPosition,
     lrp_extensions::{NameFromNode, OptionNameFromNode},
@@ -10,12 +11,6 @@ use lib_ruby_parser::{nodes as lrp_nodes, traverse::visitor::Visitor};
 use lsp_types::Position;
 use ropey::Rope;
 use tracing::debug;
-
-// #[allow(clippy::wildcard_imports)]
-// use super::{
-//     file_ast::{nodes::*, properties::Properties, Node},
-//     lrp_extensions::OptionNameFromNode,
-// };
 
 pub(crate) struct Transformer<'a> {
     current_id: usize,

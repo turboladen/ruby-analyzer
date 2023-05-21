@@ -1,3 +1,5 @@
+//! This module contains convenience functions for working with `lib_ruby_parser` data.
+//!
 use lib_ruby_parser::{nodes, Node};
 
 pub(super) trait NameFromNode {
