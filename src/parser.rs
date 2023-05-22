@@ -89,14 +89,10 @@ mod tests {
 
         let file_source = FileSource::new(&db, file_uri, code);
 
-        let ast = parse(&db, file_source);
-        let nodes = ast.nodes(&db);
-
+        let nodes = parse(&db, file_source);
         assert_eq!(2, nodes.len());
 
-        let ast = parse(&db, file_source);
-        let nodes = ast.nodes(&db);
-
+        let nodes = parse(&db, file_source);
         assert_eq!(2, nodes.len());
     }
 
@@ -108,8 +104,7 @@ mod tests {
 
         let file_source = FileSource::new(&db, file_uri, code);
 
-        let ast = parse(&db, file_source);
-        let nodes = ast.nodes(&db);
+        let nodes = parse(&db, file_source);
         assert!(nodes.is_empty());
 
         let diags = parse::accumulated::<Diagnostics>(&db, file_source);

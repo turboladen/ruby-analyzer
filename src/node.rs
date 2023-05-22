@@ -40,6 +40,13 @@ impl Node {
         &self.properties
     }
 
+    // pub fn is_namespace(&self) -> bool {
+    //     matches!(
+    //         self.properties,
+    //         Properties::Class(_) | Properties::Module(_)
+    //     )
+    // }
+
     // pub fn scope_name_branch_for_self(&self) -> Option<Namespace> {
     //     match &self.properties {
     //         Properties::Class(class) => Some(
