@@ -24,7 +24,7 @@ pub struct FileSource {
 pub struct Diagnostics(lib_ruby_parser::Diagnostic);
 
 #[salsa::tracked]
-pub(crate) fn parse(db: &dyn crate::db::Db, file_source: FileSource) -> Arc<Vec<Node>> {
+pub fn parse(db: &dyn crate::db::Db, file_source: FileSource) -> Arc<Vec<Node>> {
     let file_uri = file_source.file_uri(db);
     let code = file_source.code(db);
 
