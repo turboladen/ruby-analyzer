@@ -20,9 +20,16 @@ pub struct FileSource {
     pub code: Rope,
 }
 
+/// Diagnostics (ex. errors) emitted during the parsing process. Can be retrieved via
+/// `crate::parser::parse::accumulated::<Diagnostics>(db)`.
+///
 #[salsa::accumulator]
 pub struct Diagnostics(lib_ruby_parser::Diagnostic);
 
+/// This is the main entry point / purpose to this crate. Takes source code from a single file,
+/// parses it using lib-ruby-parser, then transforms the lib-ruby-parser output to our custom
+/// `Node`s.
+///
 #[salsa::tracked]
 pub fn parse(db: &dyn crate::db::Db, file_source: FileSource) -> Arc<Vec<Node>> {
     let file_uri = file_source.file_uri(db);

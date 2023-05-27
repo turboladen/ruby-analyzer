@@ -5,15 +5,15 @@ use crate::node::Loc;
 #[allow(clippy::wildcard_imports)]
 use crate::{
     lrp_extensions::{NameFromNode, OptionNameFromNode},
-    namespace::{Namespace, Node as NamespaceNode},
     node::Node,
     nodes::*,
     properties::Properties,
+    scope_gate::{Node as ScopeGateNode, ScopeGate},
 };
 
 pub(crate) struct Transformer {
     current_id: usize,
-    namespace: Namespace,
+    scope_gate: ScopeGate,
     nodes: Vec<Node>,
 }
 
@@ -21,7 +21,7 @@ impl Transformer {
     pub(crate) fn new() -> Self {
         Self {
             current_id: 0,
-            namespace: Namespace::default(),
+            scope_gate: ScopeGate::default(),
             nodes: Vec::new(),
         }
     }
@@ -78,7 +78,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Alias(Alias {
                 to_id,
@@ -95,7 +95,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::And(And {
                 lhs_id,
@@ -112,7 +112,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::AndAsgn(AndAsgn {
                 recv_id,
@@ -127,7 +127,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Arg(Arg {
                 name: node.name.clone(),
@@ -141,7 +141,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Args(Args {
                 arg_ids,
@@ -157,7 +157,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Array(Array {
                 element_ids,
@@ -173,7 +173,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::ArrayPattern(ArrayPattern {
                 element_ids,
@@ -189,7 +189,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::ArrayPatternWithTail(ArrayPatternWithTail {
                 element_ids,
@@ -204,7 +204,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::BackRef(BackRef {
                 name: node.name.clone(),
@@ -218,7 +218,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Begin(Begin {
                 statement_ids,
@@ -236,7 +236,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Block(Block {
                 call_id,
@@ -254,7 +254,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::BlockPass(BlockPass {
                 value_id,
@@ -268,7 +268,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Blockarg(Blockarg {
                 name: node.name.clone(),
@@ -284,7 +284,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Break(Break {
                 arg_ids,
@@ -300,7 +300,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::CSend(CSend {
                 recv_id,
@@ -323,7 +323,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Case(Case {
                 expr_id,
@@ -344,7 +344,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::CaseMatch(CaseMatch {
                 expr_id,
@@ -364,7 +364,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Casgn(Casgn {
                 name: node.name.clone(),
@@ -382,7 +382,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Cbase(Cbase),
         });
@@ -395,24 +395,24 @@ impl Visitor for Transformer {
         assert_ne!(id, name_id, "{:#?}", &self.nodes);
 
         let name = node.name_from_node();
-        self.namespace
-            .push_owned(NamespaceNode::Class { name: name.clone() });
+        self.scope_gate
+            .push_owned(ScopeGateNode::Class(name.clone()));
         debug!(
             "Transforming class '{name}'; scope branch for body: {:?}",
-            &self.namespace
+            &self.scope_gate
         );
 
         let body_id = self.visit_optional_single_node_child(node.body.as_deref());
 
-        self.namespace.pop();
+        self.scope_gate.pop();
         debug!(
             "Transforming class '{name}'; scope branch for self: {:?}",
-            &self.namespace
+            &self.scope_gate
         );
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Class(Class {
                 name,
@@ -431,7 +431,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Complex(Complex {
                 value: node.value.clone(),
@@ -446,7 +446,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Const(Const {
                 name: node.name.clone(),
@@ -464,7 +464,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::ConstPattern(ConstPattern {
                 const_id,
@@ -480,7 +480,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Cvar(Cvar {
                 name: node.name.clone(),
@@ -494,7 +494,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Cvasgn(Cvasgn {
                 name: node.name.clone(),
@@ -510,16 +510,16 @@ impl Visitor for Transformer {
 
         let args_id = self.visit_optional_single_node_child(node.args.as_deref());
 
-        // self.namespace
-        //     .push_owned(NamespaceNode::Def(node.name.clone()));
+        self.scope_gate
+            .push_owned(ScopeGateNode::Def(node.name.clone()));
 
         let body_id = self.visit_optional_single_node_child(node.body.as_deref());
 
-        self.namespace.pop();
+        self.scope_gate.pop();
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Def(Def {
                 name: node.name.clone(),
@@ -539,7 +539,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Defined(Defined {
                 value_id,
@@ -555,16 +555,16 @@ impl Visitor for Transformer {
         let definee_id = self.visit_single_node_child(&node.definee);
         let args_id = self.visit_optional_single_node_child(node.args.as_deref());
 
-        // self.namespace
-        //     .push_owned(NamespaceNode::Defs(node.name.clone()));
+        self.scope_gate
+            .push_owned(ScopeGateNode::Defs(node.name.clone()));
 
         let body_id = self.visit_optional_single_node_child(node.body.as_deref());
 
-        self.namespace.pop();
+        self.scope_gate.pop();
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Defs(Defs {
                 definee_id,
@@ -586,7 +586,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Dstr(Dstr {
                 part_ids,
@@ -602,7 +602,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Dsym(Dsym {
                 part_ids,
@@ -619,7 +619,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::EFlipFlop(EFlipFlop {
                 left_id,
@@ -634,7 +634,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::EmptyElse(EmptyElse),
         });
@@ -645,7 +645,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Encoding(Encoding),
         });
@@ -658,7 +658,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Ensure(Ensure {
                 body_id,
@@ -675,7 +675,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Erange(Erange {
                 left_id,
@@ -690,7 +690,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::False(False),
         });
@@ -701,7 +701,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::File(File),
         });
@@ -713,7 +713,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::FindPattern(FindPattern {
                 element_ids,
@@ -728,7 +728,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Float(Float {
                 value: node.value.clone(),
@@ -745,7 +745,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::For(For {
                 iterator_id,
@@ -764,7 +764,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::ForwardArg(ForwardArg),
         });
@@ -775,7 +775,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::ForwardedArgs(ForwardedArgs),
         });
@@ -786,7 +786,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Gvar(Gvar {
                 name: node.name.clone(),
@@ -800,7 +800,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Gvasgn(Gvasgn {
                 name: node.name.clone(),
@@ -817,7 +817,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Hash(Hash {
                 pair_ids,
@@ -833,7 +833,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::HashPattern(HashPattern {
                 element_ids,
@@ -849,7 +849,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Heredoc(Heredoc {
                 part_ids,
@@ -867,7 +867,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::If(If {
                 cond_id,
@@ -887,7 +887,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::IfGuard(IfGuard {
                 cond_id,
@@ -903,7 +903,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::IFlipFlop(IFlipFlop {
                 left_id,
@@ -921,7 +921,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::IfMod(IfMod {
                 cond_id,
@@ -940,7 +940,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::IfTernary(IfTernary {
                 cond_id,
@@ -959,7 +959,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Index(Index {
                 recv_id,
@@ -978,7 +978,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::IndexAsgn(IndexAsgn {
                 recv_id,
@@ -999,7 +999,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::InPattern(InPattern {
                 pattern_id,
@@ -1016,7 +1016,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Int(Int {
                 value: node.value.clone(),
@@ -1032,7 +1032,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Irange(Irange {
                 left_id,
@@ -1047,7 +1047,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Ivar(Ivar {
                 name: node.name.clone(),
@@ -1061,7 +1061,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Ivasgn(Ivasgn {
                 name: node.name.clone(),
@@ -1077,7 +1077,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Kwarg(Kwarg {
                 name: node.name.clone(),
@@ -1092,7 +1092,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Kwargs(Kwargs { pair_ids }),
         });
@@ -1104,7 +1104,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::KwBegin(KwBegin {
                 statement_ids,
@@ -1119,7 +1119,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Kwnilarg(Kwnilarg {
                 name_l: Loc::from(node.name_l),
@@ -1133,7 +1133,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Kwoptarg(Kwoptarg {
                 name: node.name.clone(),
@@ -1148,7 +1148,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Kwrestarg(Kwrestarg {
                 name: node.name.clone(),
@@ -1164,7 +1164,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Kwsplat(Kwsplat {
                 value_id,
@@ -1178,7 +1178,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Lambda(Lambda),
         });
@@ -1189,7 +1189,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Line(Line),
         });
@@ -1200,7 +1200,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Lvar(Lvar {
                 name: node.name.clone(),
@@ -1214,7 +1214,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Lvasgn(Lvasgn {
                 name: node.name.clone(),
@@ -1232,7 +1232,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Masgn(Masgn {
                 lhs_id,
@@ -1249,7 +1249,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::MatchAlt(MatchAlt {
                 lhs_id,
@@ -1266,7 +1266,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::MatchAs(MatchAs {
                 value_id,
@@ -1282,7 +1282,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::MatchCurrentLine(MatchCurrentLine { re_id }),
         });
@@ -1293,7 +1293,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::MatchNilPattern(MatchNilPattern {
                 operator_l: Loc::from(node.operator_l),
@@ -1309,7 +1309,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::MatchPattern(MatchPattern {
                 value_id,
@@ -1326,7 +1326,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::MatchPatternP(MatchPatternP {
                 value_id,
@@ -1342,7 +1342,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::MatchRest(MatchRest {
                 name: node.option_name_from_node(),
@@ -1357,7 +1357,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::MatchVar(MatchVar {
                 name: node.name.clone(),
@@ -1373,7 +1373,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::MatchWithLvasgn(MatchWithLvasgn {
                 re_id,
@@ -1389,7 +1389,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Mlhs(Mlhs {
                 item_ids,
@@ -1404,16 +1404,16 @@ impl Visitor for Transformer {
         let name_id = self.visit_single_node_child(&node.name);
 
         let name = node.name_from_node();
-        self.namespace
-            .push_owned(NamespaceNode::Module { name: name.clone() });
+        self.scope_gate
+            .push_owned(ScopeGateNode::Module(name.clone()));
 
         let body_id = self.visit_optional_single_node_child(node.body.as_deref());
 
-        self.namespace.pop();
+        self.scope_gate.pop();
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Module(Module {
                 name,
@@ -1431,7 +1431,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Next(Next {
                 arg_ids,
@@ -1445,7 +1445,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Nil(Nil),
         });
@@ -1456,7 +1456,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::NthRef(NthRef {
                 name: node.name.clone(),
@@ -1471,7 +1471,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Numblock(Numblock {
                 call_id,
@@ -1490,7 +1490,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::OpAsgn(OpAsgn {
                 recv_id,
@@ -1507,7 +1507,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Optarg(Optarg {
                 default_id,
@@ -1525,7 +1525,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Or(Or {
                 lhs_id,
@@ -1542,7 +1542,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::OrAsgn(OrAsgn {
                 recv_id,
@@ -1559,7 +1559,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Pair(Pair {
                 key_id,
@@ -1575,7 +1575,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Pin(Pin {
                 var_id,
@@ -1590,7 +1590,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Postexe(Postexe {
                 body_id,
@@ -1607,7 +1607,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Preexe(Preexe {
                 body_id,
@@ -1624,7 +1624,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Procarg0(Procarg0 {
                 arg_ids,
@@ -1639,7 +1639,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Rational(Rational {
                 value: node.value.clone(),
@@ -1653,7 +1653,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Redo(Redo),
         });
@@ -1666,7 +1666,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Regexp(Regexp {
                 part_ids,
@@ -1682,7 +1682,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::RegOpt(RegOpt {
                 options: node.options.clone(),
@@ -1698,7 +1698,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Rescue(Rescue {
                 body_id,
@@ -1717,7 +1717,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::RescueBody(RescueBody {
                 exc_list_id,
@@ -1735,7 +1735,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Restarg(Restarg {
                 name: node.name.clone(),
@@ -1750,7 +1750,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Retry(Retry),
         });
@@ -1762,7 +1762,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Return(Return {
                 arg_ids,
@@ -1778,7 +1778,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::SClass(SClass {
                 expr_id,
@@ -1795,7 +1795,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Self_(Self_),
         });
@@ -1808,7 +1808,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Send(Send {
                 method_name: node.method_name.clone(),
@@ -1828,7 +1828,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Shadowarg(Shadowarg {
                 name: node.name.clone(),
@@ -1842,7 +1842,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Splat(Splat {
                 value_id,
@@ -1856,7 +1856,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Str(Str {
                 value: node.value.clone().into_raw(),
@@ -1873,7 +1873,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Super(Super {
                 arg_ids,
@@ -1889,7 +1889,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Sym(Sym {
                 // NOTE: Potential loss of data here.
@@ -1905,7 +1905,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::True(True),
         });
@@ -1917,7 +1917,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Undef(Undef {
                 name_ids,
@@ -1932,7 +1932,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::UnlessGuard(UnlessGuard {
                 cond_id,
@@ -1948,7 +1948,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Until(Until {
                 cond_id,
@@ -1967,7 +1967,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::UntilPost(UntilPost {
                 cond_id,
@@ -1984,7 +1984,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::When(When {
                 pattern_ids,
@@ -2002,7 +2002,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::While(While {
                 cond_id,
@@ -2021,7 +2021,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::WhilePost(WhilePost {
                 cond_id,
@@ -2037,7 +2037,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::XHeredoc(XHeredoc {
                 part_ids,
@@ -2053,7 +2053,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Xstr(Xstr {
                 part_ids,
@@ -2069,7 +2069,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::Yield(Yield {
                 arg_ids,
@@ -2085,7 +2085,7 @@ impl Visitor for Transformer {
 
         self.nodes.push(Node {
             id,
-            namespace: self.namespace.clone(),
+            scope_gate: self.scope_gate.clone(),
             expression_l: Loc::from(node.expression_l),
             properties: Properties::ZSuper(ZSuper),
         });
