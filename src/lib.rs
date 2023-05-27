@@ -6,6 +6,7 @@ pub(crate) mod node;
 pub(crate) mod nodes;
 pub mod parser;
 pub(crate) mod properties;
+pub mod queries;
 pub(crate) mod transformer;
 
 pub use self::node::Node;
@@ -17,4 +18,6 @@ pub struct Jar(
     crate::parser::parse,
     crate::parser::inner_transform,
     crate::parser::NodeSource,
+    crate::queries::ClosestNodeQuery,
+    crate::queries::find_namespace,
 );

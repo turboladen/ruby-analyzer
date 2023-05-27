@@ -1,6 +1,3 @@
-use lib_ruby_parser::Loc;
-use lsp_types::Position;
-
 use crate::{namespace::Namespace, properties::Properties};
 
 /// A `Node` represents an item in a ruby `Ast`. Unlike `lib-ruby-parser`'s Ast, which represents
@@ -10,11 +7,12 @@ use crate::{namespace::Namespace, properties::Properties};
 /// resides in an entire codebase, lends itself more toward lookup in `Vec`-based index (which is
 /// the pattern we use), as opposed to having to traverse a tree or graph.
 ///
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Node {
     pub(crate) id: usize,
     pub(crate) namespace: Namespace,
-    pub(crate) starting_position: Position,
+    // TODO: I think this doesn't belong here; and maybe isn't necessary at all (i.e. it could be
+    // calculated using the cursor position and the rope, as needed, instead of for everything).
     pub(crate) expression_l: Loc,
     pub(crate) properties: Properties,
 }
@@ -28,10 +26,6 @@ impl Node {
         &self.namespace
     }
 
-    pub const fn starting_position(&self) -> Position {
-        self.starting_position
-    }
-
     pub const fn expression_l(&self) -> &Loc {
         &self.expression_l
     }
@@ -39,21 +33,30 @@ impl Node {
     pub const fn properties(&self) -> &Properties {
         &self.properties
     }
+}
 
-    // pub fn is_namespace(&self) -> bool {
-    //     matches!(
-    //         self.properties,
-    //         Properties::Class(_) | Properties::Module(_)
-    //     )
-    // }
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub struct Loc {
+    begin: usize,
+    end: usize,
+}
 
-    // pub fn scope_name_branch_for_self(&self) -> Option<Namespace> {
-    //     match &self.properties {
-    //         Properties::Class(class) => Some(
-    //             self.scope_name_branch
-    //                 .join(NamespaceNode::Class(class.name.clone())),
-    //         ),
-    //         _ => None,
-    //     }
-    // }
+impl Loc {
+    pub fn begin(&self) -> usize {
+        self.begin
+    }
+
+    pub fn end(&self) -> usize {
+        self.end
+    }
+}
+
+impl From<lib_ruby_parser::Loc> for Loc {
+    #[inline]
+    fn from(value: lib_ruby_parser::Loc) -> Self {
+        Self {
+            begin: value.begin,
+            end: value.end,
+        }
+    }
 }

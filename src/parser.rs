@@ -1,4 +1,7 @@
-use std::path::{Path, PathBuf};
+use std::{
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 
 use lib_ruby_parser::traverse::visitor::Visitor;
 use ropey::Rope;
@@ -21,7 +24,7 @@ pub struct FileSource {
 pub struct Diagnostics(lib_ruby_parser::Diagnostic);
 
 #[salsa::tracked]
-pub(crate) fn parse(db: &dyn crate::db::Db, file_source: FileSource) -> Vec<Node> {
+pub(crate) fn parse(db: &dyn crate::db::Db, file_source: FileSource) -> Arc<Vec<Node>> {
     let file_uri = file_source.file_uri(db);
     let code = file_source.code(db);
 
@@ -32,10 +35,10 @@ pub(crate) fn parse(db: &dyn crate::db::Db, file_source: FileSource) -> Vec<Node
     }
 
     if let Some(root_node) = result.ast {
-        let node_source = NodeSource::new(db, *root_node, code.clone());
-        inner_transform(db, node_source)
+        let node_source = NodeSource::new(db, *root_node);
+        Arc::new(inner_transform(db, node_source))
     } else {
-        vec![]
+        Arc::new(Vec::with_capacity(0))
     }
 }
 
@@ -55,12 +58,9 @@ pub(crate) fn lrp_parse(buffer_name: &Path, code: &Rope) -> lib_ruby_parser::Par
 }
 
 #[salsa::input]
-pub struct NodeSource {
+pub(crate) struct NodeSource {
     #[return_ref]
-    pub root_node: lib_ruby_parser::Node,
-
-    #[return_ref]
-    pub code: Rope,
+    pub(crate) root_node: lib_ruby_parser::Node,
 }
 
 /// Uses a `Transformer` to take the AST result of a `lib_ruby_parser::ParserResult` and converts
@@ -69,9 +69,8 @@ pub struct NodeSource {
 #[salsa::tracked]
 pub(crate) fn inner_transform(db: &dyn crate::db::Db, node_source: NodeSource) -> Vec<Node> {
     let root_node = node_source.root_node(db);
-    let code = node_source.code(db);
 
-    let mut transformer = transformer::Transformer::new(code);
+    let mut transformer = transformer::Transformer::new();
     transformer.visit(root_node);
 
     transformer.into_nodes()
