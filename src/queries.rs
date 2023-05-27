@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
 use crate::{
-    namespace::{self, Namespace},
     properties::Properties,
+    scope_gate::{self, ScopeGate},
     Node,
 };
 
@@ -19,7 +19,7 @@ pub struct ClosestNodeQuery {
 ///
 
 #[salsa::tracked]
-pub fn find_namespace(db: &dyn crate::db::Db, query: ClosestNodeQuery) -> Option<Namespace> {
+pub fn find_namespace(db: &dyn crate::db::Db, query: ClosestNodeQuery) -> Option<ScopeGate> {
     let offset = query.offset(db);
     let nodes = query.nodes(db);
 
@@ -27,13 +27,19 @@ pub fn find_namespace(db: &dyn crate::db::Db, query: ClosestNodeQuery) -> Option
         .iter()
         .filter(move |n| n.expression_l().begin() <= offset && offset <= n.expression_l().end())
         .map(|node| match node.properties() {
-            Properties::Class(cp) => node.namespace().join(namespace::Node::Class {
-                name: cp.name.clone(),
-            }),
-            Properties::Module(cp) => node.namespace().join(namespace::Node::Module {
-                name: cp.name.clone(),
-            }),
-            _ => node.namespace().clone(),
+            Properties::Class(cp) => node
+                .scope_gate()
+                .join(scope_gate::Node::Class(cp.name.clone())),
+            Properties::Module(cp) => node
+                .scope_gate()
+                .join(scope_gate::Node::Module(cp.name.clone())),
+            Properties::Def(cp) => node
+                .scope_gate()
+                .join(scope_gate::Node::Def(cp.name.clone())),
+            Properties::Defs(cp) => node
+                .scope_gate()
+                .join(scope_gate::Node::Defs(cp.name.clone())),
+            _ => node.scope_gate().clone(),
         })
         .max_by(|x, y| x.len().cmp(&y.len()))
 }
@@ -67,9 +73,7 @@ mod tests {
             let file_source = file_source(&db, "class Foo; end");
             let nodes = crate::parser::parse(&db, file_source);
 
-            let expected = Namespace::new(vec![namespace::Node::Class {
-                name: "Foo".to_string(),
-            }]);
+            let expected = ScopeGate::new(vec![scope_gate::Node::Class("Foo".to_string())]);
 
             // At the beginning of the class def.
             {
@@ -92,9 +96,7 @@ mod tests {
             let file_source = file_source(&db, "class Foo; module Bar; end; end");
             let nodes = crate::parser::parse(&db, file_source);
 
-            let expected_foo = Namespace::new(vec![namespace::Node::Class {
-                name: "Foo".to_string(),
-            }]);
+            let expected_foo = ScopeGate::new(vec![scope_gate::Node::Class("Foo".to_string())]);
 
             // At the beginning of the class def.
             {
@@ -111,13 +113,9 @@ mod tests {
                 assert_eq!(namespace, expected_foo);
             }
 
-            let expected_bar = Namespace::new(vec![
-                namespace::Node::Class {
-                    name: "Foo".to_string(),
-                },
-                namespace::Node::Module {
-                    name: "Bar".to_string(),
-                },
+            let expected_bar = ScopeGate::new(vec![
+                scope_gate::Node::Class("Foo".to_string()),
+                scope_gate::Node::Module("Bar".to_string()),
             ]);
 
             // On the first "m" in "module"
