@@ -1,14 +1,23 @@
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
-}
+pub(crate) mod compat;
+pub mod db;
+pub(crate) mod lrp_extensions;
+pub(crate) mod namespace;
+pub(crate) mod node;
+pub(crate) mod nodes;
+pub mod parser;
+pub(crate) mod properties;
+pub mod queries;
+pub(crate) mod transformer;
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+pub use self::node::Node;
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
-}
+#[salsa::jar(db = crate::db::Db)]
+pub struct Jar(
+    crate::parser::FileSource,
+    crate::parser::Diagnostics,
+    crate::parser::parse,
+    crate::parser::inner_transform,
+    crate::parser::NodeSource,
+    crate::queries::ClosestNodeQuery,
+    crate::queries::find_namespace,
+);
