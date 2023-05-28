@@ -8,8 +8,9 @@ pub(crate) mod properties;
 pub mod queries;
 pub mod scope_gate;
 pub(crate) mod transformer;
+pub mod tree_sitter;
 
-pub use self::node::Node;
+pub use self::{db::Db, node::Node};
 
 #[salsa::jar(db = crate::db::Db)]
 pub struct Jar(
@@ -20,4 +21,6 @@ pub struct Jar(
     crate::parser::NodeSource,
     crate::queries::ClosestNodeQuery,
     crate::queries::find_namespace,
+    crate::tree_sitter::FileSource,
+    crate::tree_sitter::parse,
 );
