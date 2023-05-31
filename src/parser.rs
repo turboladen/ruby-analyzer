@@ -3,6 +3,7 @@ use std::{
     sync::Arc,
 };
 
+use indextree::Arena;
 use lib_ruby_parser::traverse::visitor::Visitor;
 use ropey::Rope;
 
@@ -31,7 +32,7 @@ pub struct Diagnostics(lib_ruby_parser::Diagnostic);
 /// `Node`s.
 ///
 #[salsa::tracked]
-pub fn parse(db: &dyn crate::db::Db, file_source: FileSource) -> Arc<Vec<Node>> {
+pub fn parse(db: &dyn crate::db::Db, file_source: FileSource) -> Arc<Arena<Node>> {
     let file_uri = file_source.file_uri(db);
     let code = file_source.code(db);
 
@@ -43,9 +44,10 @@ pub fn parse(db: &dyn crate::db::Db, file_source: FileSource) -> Arc<Vec<Node>> 
 
     if let Some(root_node) = result.ast {
         let node_source = NodeSource::new(db, *root_node);
-        Arc::new(inner_transform(db, node_source))
+        let arena = inner_transform(db, node_source);
+        Arc::new(arena)
     } else {
-        Arc::new(Vec::with_capacity(0))
+        Arc::new(Arena::with_capacity(0))
     }
 }
 
@@ -74,13 +76,13 @@ pub(crate) struct NodeSource {
 /// those `Node`s to our `Node`s.
 ///
 #[salsa::tracked]
-pub(crate) fn inner_transform(db: &dyn crate::db::Db, node_source: NodeSource) -> Vec<Node> {
+pub(crate) fn inner_transform(db: &dyn crate::db::Db, node_source: NodeSource) -> Arena<Node> {
     let root_node = node_source.root_node(db);
 
-    let mut transformer = transformer::Transformer::new();
+    let mut transformer = transformer::Transformer::default();
     transformer.visit(root_node);
 
-    transformer.into_nodes()
+    transformer.finish()
 }
 
 #[cfg(test)]
@@ -88,6 +90,7 @@ mod tests {
     use super::*;
 
     #[test]
+    #[tracing_test::traced_test]
     fn parse_valid_ruby_test() {
         let db = crate::db::Database::default();
         let file_uri = PathBuf::from("/tmp/test.rb");
@@ -96,10 +99,10 @@ mod tests {
         let file_source = FileSource::new(&db, file_uri, code);
 
         let nodes = parse(&db, file_source);
-        assert_eq!(2, nodes.len());
+        assert_eq!(2, nodes.count());
 
         let nodes = parse(&db, file_source);
-        assert_eq!(2, nodes.len());
+        assert_eq!(2, nodes.count());
     }
 
     #[test]

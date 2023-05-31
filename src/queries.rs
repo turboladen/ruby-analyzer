@@ -1,5 +1,7 @@
 use std::sync::Arc;
 
+use indextree::Arena;
+
 use crate::{
     properties::Properties,
     scope_gate::{self, ScopeGate},
@@ -11,12 +13,8 @@ pub struct ClosestNodeQuery {
     pub offset: usize,
 
     #[return_ref]
-    pub nodes: Arc<Vec<Node>>,
+    pub nodes: Arc<Arena<Node>>,
 }
-
-/// Iterates through all Nodes for `file_uri` and finds the deepest-most `Namespace` for where
-/// the `offset` is.
-///
 
 #[salsa::tracked]
 pub fn find_namespace(db: &dyn crate::db::Db, query: ClosestNodeQuery) -> Option<ScopeGate> {
@@ -25,21 +23,31 @@ pub fn find_namespace(db: &dyn crate::db::Db, query: ClosestNodeQuery) -> Option
 
     nodes
         .iter()
-        .filter(move |n| n.expression_l().begin() <= offset && offset <= n.expression_l().end())
-        .map(|node| match node.properties() {
+        .filter(move |n| {
+            let expression_l = n.get().expression_l();
+            expression_l.begin() <= offset && offset <= expression_l.end()
+        })
+        .map(|node| match node.get().properties() {
             Properties::Class(cp) => node
+                .get()
                 .scope_gate()
                 .join(scope_gate::Node::Class(cp.name.clone())),
             Properties::Module(cp) => node
+                .get()
                 .scope_gate()
                 .join(scope_gate::Node::Module(cp.name.clone())),
             Properties::Def(cp) => node
+                .get()
                 .scope_gate()
                 .join(scope_gate::Node::Def(cp.name.clone())),
             Properties::Defs(cp) => node
+                .get()
                 .scope_gate()
                 .join(scope_gate::Node::Defs(cp.name.clone())),
-            _ => node.scope_gate().clone(),
+            _ => node.get().scope_gate().clone(),
+        })
+        .inspect(|node| {
+            dbg!(node);
         })
         .max_by(|x, y| x.len().cmp(&y.len()))
 }
@@ -90,6 +98,7 @@ mod tests {
             }
         }
 
+        #[tracing_test::traced_test]
         #[test]
         fn parse_valid_dual_level_test() {
             let db = Database::default();
@@ -97,6 +106,11 @@ mod tests {
             let nodes = crate::parser::parse(&db, file_source);
 
             let expected_foo = ScopeGate::new(vec![scope_gate::Node::Class("Foo".to_string())]);
+
+            let expected_bar = ScopeGate::new(vec![
+                scope_gate::Node::Class("Foo".to_string()),
+                scope_gate::Node::Module("Bar".to_string()),
+            ]);
 
             // At the beginning of the class def.
             {
@@ -113,18 +127,22 @@ mod tests {
                 assert_eq!(namespace, expected_foo);
             }
 
-            let expected_bar = ScopeGate::new(vec![
-                scope_gate::Node::Class("Foo".to_string()),
-                scope_gate::Node::Module("Bar".to_string()),
-            ]);
-
             // On the first "m" in "module"
             {
                 let query = ClosestNodeQuery::new(&db, 11, nodes.clone());
                 let namespace = find_namespace(&db, query).unwrap();
                 assert_eq!(namespace, expected_bar);
+            }
 
-                // After "Bar"'s "end"'s ";"
+            // On the first "m" in "module"
+            {
+                let query = ClosestNodeQuery::new(&db, 22, nodes.clone());
+                let namespace = find_namespace(&db, query).unwrap();
+                assert_eq!(namespace, expected_bar);
+            }
+
+            // After "Bar"'s "end"'s ";"
+            {
                 let query = ClosestNodeQuery::new(&db, 27, nodes);
                 let namespace = find_namespace(&db, query).unwrap();
                 assert_eq!(namespace, expected_foo);

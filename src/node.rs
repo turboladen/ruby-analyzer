@@ -9,7 +9,6 @@ use crate::{properties::Properties, scope_gate::ScopeGate};
 ///
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Node {
-    pub(crate) id: usize,
     pub(crate) scope_gate: ScopeGate,
     // TODO: I think this doesn't belong here; and maybe isn't necessary at all (i.e. it could be
     // calculated using the cursor position and the rope, as needed, instead of for everything).
@@ -18,10 +17,6 @@ pub struct Node {
 }
 
 impl Node {
-    pub const fn id(&self) -> usize {
-        self.id
-    }
-
     /// Scope gate that this node is defined within.
     ///
     pub const fn scope_gate(&self) -> &ScopeGate {
