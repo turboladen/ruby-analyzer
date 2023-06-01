@@ -10,7 +10,12 @@ pub mod scope_gate;
 pub(crate) mod transformer;
 pub mod tree_sitter;
 
-pub use self::{db::Db, node::Node};
+pub use self::{
+    db::{Database, Db},
+    node::Node,
+    properties::Properties,
+    scope_gate::{Node as ScopeNode, ScopeGate},
+};
 
 #[salsa::jar(db = crate::db::Db)]
 pub struct Jar(

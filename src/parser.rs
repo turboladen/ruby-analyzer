@@ -1,7 +1,4 @@
-use std::{
-    path::{Path, PathBuf},
-    sync::Arc,
-};
+use std::path::{Path, PathBuf};
 
 use indextree::Arena;
 use lib_ruby_parser::traverse::visitor::Visitor;
@@ -32,7 +29,7 @@ pub struct Diagnostics(lib_ruby_parser::Diagnostic);
 /// `Node`s.
 ///
 #[salsa::tracked]
-pub fn parse(db: &dyn crate::db::Db, file_source: FileSource) -> Arc<Arena<Node>> {
+pub fn parse(db: &dyn crate::db::Db, file_source: FileSource) -> Arena<Node> {
     let file_uri = file_source.file_uri(db);
     let code = file_source.code(db);
 
@@ -44,10 +41,9 @@ pub fn parse(db: &dyn crate::db::Db, file_source: FileSource) -> Arc<Arena<Node>
 
     if let Some(root_node) = result.ast {
         let node_source = NodeSource::new(db, *root_node);
-        let arena = inner_transform(db, node_source);
-        Arc::new(arena)
+        inner_transform(db, node_source)
     } else {
-        Arc::new(Arena::with_capacity(0))
+        Arena::with_capacity(0)
     }
 }
 

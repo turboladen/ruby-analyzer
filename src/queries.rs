@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use indextree::Arena;
 
 use crate::{
@@ -13,7 +11,7 @@ pub struct ClosestNodeQuery {
     pub offset: usize,
 
     #[return_ref]
-    pub nodes: Arc<Arena<Node>>,
+    pub nodes: Arena<Node>,
 }
 
 #[salsa::tracked]

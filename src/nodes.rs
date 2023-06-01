@@ -115,6 +115,10 @@ pub struct Casgn {
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub struct Class {
     pub(crate) name: String,
+
+    pub(crate) has_superclass: bool,
+    pub(crate) has_body: bool,
+
     pub(crate) keyword_l: Loc,
     pub(crate) operator_l: Option<Loc>,
     pub(crate) end_l: Loc,
@@ -150,6 +154,12 @@ pub struct Const {
     pub(crate) name: String,
     pub(crate) double_colon_l: Option<Loc>,
     pub(crate) name_l: Loc,
+}
+
+impl Const {
+    pub fn name(&self) -> &str {
+        self.name.as_ref()
+    }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
