@@ -15,6 +15,12 @@ pub struct FileSource {
     pub tree: Option<Tree>,
 }
 
+/// Diagnostics (ex. errors) emitted during the parsing process. Can be retrieved via
+/// `crate::parser::parse::accumulated::<Diagnostics>(db)`.
+///
+#[salsa::accumulator]
+pub struct Diagnostics(lib_ruby_parser::Diagnostic);
+
 #[salsa::tracked(no_eq)]
 pub fn parse(db: &dyn crate::db::Db, file_source: FileSource) -> Option<Tree> {
     let mut parser = Parser::new();

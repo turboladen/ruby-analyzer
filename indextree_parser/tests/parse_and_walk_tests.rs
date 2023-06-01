@@ -2,7 +2,10 @@ use std::path::PathBuf;
 
 use indextree::Arena;
 use ropey::Rope;
-use ruby_analyzer::{parser::FileSource, Database, Node, Properties, ScopeGate, ScopeNode};
+use ruby_analyzer_indextree_parser::{
+    parser::{parse, FileSource},
+    Database, Node, Properties, ScopeGate, ScopeNode,
+};
 
 mod class_with_items {
     use super::*;
@@ -18,7 +21,7 @@ end"#;
         let database = Database::default();
         let file_source = FileSource::new(&database, PathBuf::new(), Rope::from_str(CODE));
 
-        let arena = ruby_analyzer::parser::parse(&database, file_source);
+        let arena = parse(&database, file_source);
 
         assert_eq!(13, arena.count());
 

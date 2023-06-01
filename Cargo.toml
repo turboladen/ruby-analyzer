@@ -1,2 +1,2 @@
 [workspace]
-members = ["indextree_parser"]
+members = ["indextree_parser", "tree-sitter_parser"]
