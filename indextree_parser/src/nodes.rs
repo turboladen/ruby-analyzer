@@ -116,9 +116,8 @@ pub struct Casgn {
 pub struct Class {
     pub(crate) name: String,
 
-    pub(crate) has_superclass: bool,
-    pub(crate) has_body: bool,
-
+    // pub(crate) has_superclass: bool,
+    // pub(crate) has_body: bool,
     pub(crate) keyword_l: Loc,
     pub(crate) operator_l: Option<Loc>,
     pub(crate) end_l: Loc,
