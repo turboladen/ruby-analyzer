@@ -1,4 +1,3 @@
-pub(crate) mod compat;
 pub mod db;
 pub(crate) mod lrp_extensions;
 pub(crate) mod node;
