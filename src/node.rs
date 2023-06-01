@@ -1,3 +1,5 @@
+use std::ops::Range;
+
 use crate::{properties::Properties, scope_gate::ScopeGate};
 
 /// A `Node` represents an item in a ruby `Ast`. Unlike `lib-ruby-parser`'s Ast, which represents
@@ -55,6 +57,10 @@ impl Loc {
     ///
     pub fn end(&self) -> usize {
         self.end
+    }
+
+    pub fn as_range(&self) -> Range<usize> {
+        self.begin..self.end
     }
 }
 
