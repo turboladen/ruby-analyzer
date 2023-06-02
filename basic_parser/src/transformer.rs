@@ -60,6 +60,9 @@ impl Transformer {
         })
     }
 
+    // Uses `func` to drive the visitor (that function should call a visit fucntion), then returns
+    // the ID of the node that was visited.
+    //
     fn visit_node_child<F>(&mut self, func: F) -> usize
     where
         F: FnOnce(&mut Transformer),
