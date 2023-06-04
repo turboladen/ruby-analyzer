@@ -4,13 +4,13 @@ use std::ops::Range;
 
 use crate::ScopeGate;
 
-pub(crate) use self::node::Node;
+pub(crate) use self::node::NodeType;
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct LocNode {
-    expression_l: Loc,
-    node: Node,
-    scope_gate: ScopeGate,
+    pub(crate) node: NodeType,
+    pub(crate) scope_gate: ScopeGate,
+    pub(crate) expression_l: Loc,
 }
 
 /// Represents the beginning and end of a Node.

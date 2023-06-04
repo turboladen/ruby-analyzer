@@ -36,7 +36,7 @@ impl Transformer {
         self.current_id
     }
 
-    fn visit_vec_node_child(&mut self, nodes: &[lib_ruby_parser::Node]) -> Vec<usize> {
+    fn visit_children(&mut self, nodes: &[lib_ruby_parser::Node]) -> Vec<usize> {
         nodes
             .iter()
             .map(|node| {
@@ -47,14 +47,11 @@ impl Transformer {
             .collect()
     }
 
-    fn visit_optional_single_node_child(
-        &mut self,
-        node: Option<&lib_ruby_parser::Node>,
-    ) -> Option<usize> {
-        node.map(|n| self.visit_single_node_child(n))
+    fn visit_optional_child(&mut self, node: &Option<Box<lib_ruby_parser::Node>>) -> Option<usize> {
+        node.as_ref().map(|n| self.visit_child(n))
     }
 
-    fn visit_single_node_child(&mut self, node: &lib_ruby_parser::Node) -> usize {
+    fn visit_child(&mut self, node: &lib_ruby_parser::Node) -> usize {
         self.visit_node_child(|transformer| {
             transformer.visit(node);
         })
@@ -76,8 +73,8 @@ impl Transformer {
 impl Visitor for Transformer {
     fn on_alias(&mut self, node: &lrp_nodes::Alias) {
         let id = self.new_id();
-        let to_id = self.visit_single_node_child(&node.to);
-        let from_id = self.visit_single_node_child(&node.from);
+        let to_id = self.visit_child(&node.to);
+        let from_id = self.visit_child(&node.from);
 
         self.nodes.push(Node {
             id,
@@ -93,8 +90,8 @@ impl Visitor for Transformer {
 
     fn on_and(&mut self, node: &lrp_nodes::And) {
         let id = self.new_id();
-        let lhs_id = self.visit_single_node_child(&node.lhs);
-        let rhs_id = self.visit_single_node_child(&node.rhs);
+        let lhs_id = self.visit_child(&node.lhs);
+        let rhs_id = self.visit_child(&node.rhs);
 
         self.nodes.push(Node {
             id,
@@ -110,8 +107,8 @@ impl Visitor for Transformer {
 
     fn on_and_asgn(&mut self, node: &lrp_nodes::AndAsgn) {
         let id = self.new_id();
-        let recv_id = self.visit_single_node_child(&node.recv);
-        let value_id = self.visit_single_node_child(&node.value);
+        let recv_id = self.visit_child(&node.recv);
+        let value_id = self.visit_child(&node.value);
 
         self.nodes.push(Node {
             id,
@@ -140,7 +137,7 @@ impl Visitor for Transformer {
 
     fn on_args(&mut self, node: &lrp_nodes::Args) {
         let id = self.new_id();
-        let arg_ids = self.visit_vec_node_child(&node.args);
+        let arg_ids = self.visit_children(&node.args);
 
         self.nodes.push(Node {
             id,
@@ -156,7 +153,7 @@ impl Visitor for Transformer {
 
     fn on_array(&mut self, node: &lrp_nodes::Array) {
         let id = self.new_id();
-        let element_ids = self.visit_vec_node_child(&node.elements);
+        let element_ids = self.visit_children(&node.elements);
 
         self.nodes.push(Node {
             id,
@@ -172,7 +169,7 @@ impl Visitor for Transformer {
 
     fn on_array_pattern(&mut self, node: &lrp_nodes::ArrayPattern) {
         let id = self.new_id();
-        let element_ids = self.visit_vec_node_child(&node.elements);
+        let element_ids = self.visit_children(&node.elements);
 
         self.nodes.push(Node {
             id,
@@ -188,7 +185,7 @@ impl Visitor for Transformer {
 
     fn on_array_pattern_with_tail(&mut self, node: &lrp_nodes::ArrayPatternWithTail) {
         let id = self.new_id();
-        let element_ids = self.visit_vec_node_child(&node.elements);
+        let element_ids = self.visit_children(&node.elements);
 
         self.nodes.push(Node {
             id,
@@ -217,7 +214,7 @@ impl Visitor for Transformer {
 
     fn on_begin(&mut self, node: &lrp_nodes::Begin) {
         let id = self.new_id();
-        let statement_ids = self.visit_vec_node_child(&node.statements);
+        let statement_ids = self.visit_children(&node.statements);
 
         self.nodes.push(Node {
             id,
@@ -233,9 +230,9 @@ impl Visitor for Transformer {
 
     fn on_block(&mut self, node: &lrp_nodes::Block) {
         let id = self.new_id();
-        let call_id = self.visit_single_node_child(&node.call);
-        let args_id = self.visit_optional_single_node_child(node.args.as_deref());
-        let body_id = self.visit_optional_single_node_child(node.body.as_deref());
+        let call_id = self.visit_child(&node.call);
+        let args_id = self.visit_optional_child(&node.args);
+        let body_id = self.visit_optional_child(&node.body);
 
         self.nodes.push(Node {
             id,
@@ -253,7 +250,7 @@ impl Visitor for Transformer {
 
     fn on_block_pass(&mut self, node: &lrp_nodes::BlockPass) {
         let id = self.new_id();
-        let value_id = self.visit_optional_single_node_child(node.value.as_deref());
+        let value_id = self.visit_optional_child(&node.value);
 
         self.nodes.push(Node {
             id,
@@ -283,7 +280,7 @@ impl Visitor for Transformer {
 
     fn on_break(&mut self, node: &lrp_nodes::Break) {
         let id = self.new_id();
-        let arg_ids = self.visit_vec_node_child(&node.args);
+        let arg_ids = self.visit_children(&node.args);
 
         self.nodes.push(Node {
             id,
@@ -298,8 +295,8 @@ impl Visitor for Transformer {
 
     fn on_c_send(&mut self, node: &lrp_nodes::CSend) {
         let id = self.new_id();
-        let arg_ids = self.visit_vec_node_child(&node.args);
-        let recv_id = self.visit_single_node_child(&node.recv);
+        let arg_ids = self.visit_children(&node.args);
+        let recv_id = self.visit_child(&node.recv);
 
         self.nodes.push(Node {
             id,
@@ -320,9 +317,9 @@ impl Visitor for Transformer {
 
     fn on_case(&mut self, node: &lrp_nodes::Case) {
         let id = self.new_id();
-        let expr_id = self.visit_optional_single_node_child(node.expr.as_deref());
-        let when_body_ids = self.visit_vec_node_child(&node.when_bodies);
-        let else_body_id = self.visit_optional_single_node_child(node.else_body.as_deref());
+        let expr_id = self.visit_optional_child(&node.expr);
+        let when_body_ids = self.visit_children(&node.when_bodies);
+        let else_body_id = self.visit_optional_child(&node.else_body);
 
         self.nodes.push(Node {
             id,
@@ -341,9 +338,9 @@ impl Visitor for Transformer {
 
     fn on_case_match(&mut self, node: &lrp_nodes::CaseMatch) {
         let id = self.new_id();
-        let expr_id = self.visit_single_node_child(&node.expr);
-        let in_body_ids = self.visit_vec_node_child(&node.in_bodies);
-        let else_body_id = self.visit_optional_single_node_child(node.else_body.as_deref());
+        let expr_id = self.visit_child(&node.expr);
+        let in_body_ids = self.visit_children(&node.in_bodies);
+        let else_body_id = self.visit_optional_child(&node.else_body);
 
         self.nodes.push(Node {
             id,
@@ -362,8 +359,8 @@ impl Visitor for Transformer {
 
     fn on_casgn(&mut self, node: &lrp_nodes::Casgn) {
         let id = self.new_id();
-        let scope_id = self.visit_optional_single_node_child(node.scope.as_deref());
-        let value_id = self.visit_optional_single_node_child(node.value.as_deref());
+        let scope_id = self.visit_optional_child(&node.scope);
+        let value_id = self.visit_optional_child(&node.value);
 
         self.nodes.push(Node {
             id,
@@ -393,8 +390,8 @@ impl Visitor for Transformer {
 
     fn on_class(&mut self, node: &lrp_nodes::Class) {
         let id = self.new_id();
-        let superclass_id = self.visit_optional_single_node_child(node.superclass.as_deref());
-        let name_id = self.visit_single_node_child(&node.name);
+        let superclass_id = self.visit_optional_child(&node.superclass);
+        let name_id = self.visit_child(&node.name);
         assert_ne!(id, name_id, "{:#?}", &self.nodes);
 
         let name = node.name_from_node();
@@ -405,7 +402,7 @@ impl Visitor for Transformer {
             &self.scope_gate
         );
 
-        let body_id = self.visit_optional_single_node_child(node.body.as_deref());
+        let body_id = self.visit_optional_child(&node.body);
 
         self.scope_gate.pop();
         debug!(
@@ -445,7 +442,7 @@ impl Visitor for Transformer {
 
     fn on_const(&mut self, node: &lrp_nodes::Const) {
         let id = self.new_id();
-        let scope_id = self.visit_optional_single_node_child(node.scope.as_deref());
+        let scope_id = self.visit_optional_child(&node.scope);
 
         self.nodes.push(Node {
             id,
@@ -462,8 +459,8 @@ impl Visitor for Transformer {
 
     fn on_const_pattern(&mut self, node: &lrp_nodes::ConstPattern) {
         let id = self.new_id();
-        let const_id = self.visit_single_node_child(&node.const_);
-        let pattern_id = self.visit_single_node_child(&node.pattern);
+        let const_id = self.visit_child(&node.const_);
+        let pattern_id = self.visit_child(&node.pattern);
 
         self.nodes.push(Node {
             id,
@@ -493,7 +490,7 @@ impl Visitor for Transformer {
 
     fn on_cvasgn(&mut self, node: &lrp_nodes::Cvasgn) {
         let id = self.new_id();
-        let value_id = self.visit_optional_single_node_child(node.value.as_deref());
+        let value_id = self.visit_optional_child(&node.value);
 
         self.nodes.push(Node {
             id,
@@ -511,12 +508,12 @@ impl Visitor for Transformer {
     fn on_def(&mut self, node: &lrp_nodes::Def) {
         let id = self.new_id();
 
-        let args_id = self.visit_optional_single_node_child(node.args.as_deref());
+        let args_id = self.visit_optional_child(&node.args);
 
         self.scope_gate
             .push_owned(ScopeGateNode::Def(node.name.clone()));
 
-        let body_id = self.visit_optional_single_node_child(node.body.as_deref());
+        let body_id = self.visit_optional_child(&node.body);
 
         self.scope_gate.pop();
 
@@ -538,7 +535,7 @@ impl Visitor for Transformer {
 
     fn on_defined(&mut self, node: &lrp_nodes::Defined) {
         let id = self.new_id();
-        let value_id = self.visit_single_node_child(&node.value);
+        let value_id = self.visit_child(&node.value);
 
         self.nodes.push(Node {
             id,
@@ -555,13 +552,13 @@ impl Visitor for Transformer {
 
     fn on_defs(&mut self, node: &lrp_nodes::Defs) {
         let id = self.new_id();
-        let definee_id = self.visit_single_node_child(&node.definee);
-        let args_id = self.visit_optional_single_node_child(node.args.as_deref());
+        let definee_id = self.visit_child(&node.definee);
+        let args_id = self.visit_optional_child(&node.args);
 
         self.scope_gate
             .push_owned(ScopeGateNode::Defs(node.name.clone()));
 
-        let body_id = self.visit_optional_single_node_child(node.body.as_deref());
+        let body_id = self.visit_optional_child(&node.body);
 
         self.scope_gate.pop();
 
@@ -585,7 +582,7 @@ impl Visitor for Transformer {
 
     fn on_dstr(&mut self, node: &lrp_nodes::Dstr) {
         let id = self.new_id();
-        let part_ids = self.visit_vec_node_child(&node.parts);
+        let part_ids = self.visit_children(&node.parts);
 
         self.nodes.push(Node {
             id,
@@ -601,7 +598,7 @@ impl Visitor for Transformer {
 
     fn on_dsym(&mut self, node: &lrp_nodes::Dsym) {
         let id = self.new_id();
-        let part_ids = self.visit_vec_node_child(&node.parts);
+        let part_ids = self.visit_children(&node.parts);
 
         self.nodes.push(Node {
             id,
@@ -617,8 +614,8 @@ impl Visitor for Transformer {
 
     fn on_e_flip_flop(&mut self, node: &lrp_nodes::EFlipFlop) {
         let id = self.new_id();
-        let left_id = self.visit_optional_single_node_child(node.left.as_deref());
-        let right_id = self.visit_optional_single_node_child(node.right.as_deref());
+        let left_id = self.visit_optional_child(&node.left);
+        let right_id = self.visit_optional_child(&node.right);
 
         self.nodes.push(Node {
             id,
@@ -656,8 +653,8 @@ impl Visitor for Transformer {
 
     fn on_ensure(&mut self, node: &lrp_nodes::Ensure) {
         let id = self.new_id();
-        let body_id = self.visit_optional_single_node_child(node.body.as_deref());
-        let ensure_id = self.visit_optional_single_node_child(node.ensure.as_deref());
+        let body_id = self.visit_optional_child(&node.body);
+        let ensure_id = self.visit_optional_child(&node.ensure);
 
         self.nodes.push(Node {
             id,
@@ -673,8 +670,8 @@ impl Visitor for Transformer {
 
     fn on_erange(&mut self, node: &lrp_nodes::Erange) {
         let id = self.new_id();
-        let left_id = self.visit_optional_single_node_child(node.left.as_deref());
-        let right_id = self.visit_optional_single_node_child(node.right.as_deref());
+        let left_id = self.visit_optional_child(&node.left);
+        let right_id = self.visit_optional_child(&node.right);
 
         self.nodes.push(Node {
             id,
@@ -712,7 +709,7 @@ impl Visitor for Transformer {
 
     fn on_find_pattern(&mut self, node: &lrp_nodes::FindPattern) {
         let id = self.new_id();
-        let element_ids = self.visit_vec_node_child(&node.elements);
+        let element_ids = self.visit_children(&node.elements);
 
         self.nodes.push(Node {
             id,
@@ -742,9 +739,9 @@ impl Visitor for Transformer {
 
     fn on_for(&mut self, node: &lrp_nodes::For) {
         let id = self.new_id();
-        let iterator_id = self.visit_single_node_child(&node.iterator);
-        let iteratee_id = self.visit_single_node_child(&node.iteratee);
-        let body_id = self.visit_optional_single_node_child(node.body.as_deref());
+        let iterator_id = self.visit_child(&node.iterator);
+        let iteratee_id = self.visit_child(&node.iteratee);
+        let body_id = self.visit_optional_child(&node.body);
 
         self.nodes.push(Node {
             id,
@@ -799,7 +796,7 @@ impl Visitor for Transformer {
 
     fn on_gvasgn(&mut self, node: &lrp_nodes::Gvasgn) {
         let id = self.new_id();
-        let value_id = self.visit_optional_single_node_child(node.value.as_deref());
+        let value_id = self.visit_optional_child(&node.value);
 
         self.nodes.push(Node {
             id,
@@ -816,7 +813,7 @@ impl Visitor for Transformer {
 
     fn on_hash(&mut self, node: &lrp_nodes::Hash) {
         let id = self.new_id();
-        let pair_ids = self.visit_vec_node_child(&node.pairs);
+        let pair_ids = self.visit_children(&node.pairs);
 
         self.nodes.push(Node {
             id,
@@ -832,7 +829,7 @@ impl Visitor for Transformer {
 
     fn on_hash_pattern(&mut self, node: &lrp_nodes::HashPattern) {
         let id = self.new_id();
-        let element_ids = self.visit_vec_node_child(&node.elements);
+        let element_ids = self.visit_children(&node.elements);
 
         self.nodes.push(Node {
             id,
@@ -848,7 +845,7 @@ impl Visitor for Transformer {
 
     fn on_heredoc(&mut self, node: &lrp_nodes::Heredoc) {
         let id = self.new_id();
-        let part_ids = self.visit_vec_node_child(&node.parts);
+        let part_ids = self.visit_children(&node.parts);
 
         self.nodes.push(Node {
             id,
@@ -864,9 +861,9 @@ impl Visitor for Transformer {
 
     fn on_if(&mut self, node: &lrp_nodes::If) {
         let id = self.new_id();
-        let cond_id = self.visit_single_node_child(&node.cond);
-        let if_true_id = self.visit_optional_single_node_child(node.if_true.as_deref());
-        let if_false_id = self.visit_optional_single_node_child(node.if_false.as_deref());
+        let cond_id = self.visit_child(&node.cond);
+        let if_true_id = self.visit_optional_child(&node.if_true);
+        let if_false_id = self.visit_optional_child(&node.if_false);
 
         self.nodes.push(Node {
             id,
@@ -886,7 +883,7 @@ impl Visitor for Transformer {
 
     fn on_if_guard(&mut self, node: &lrp_nodes::IfGuard) {
         let id = self.new_id();
-        let cond_id = self.visit_single_node_child(&node.cond);
+        let cond_id = self.visit_child(&node.cond);
 
         self.nodes.push(Node {
             id,
@@ -901,8 +898,8 @@ impl Visitor for Transformer {
 
     fn on_i_flip_flop(&mut self, node: &lrp_nodes::IFlipFlop) {
         let id = self.new_id();
-        let left_id = self.visit_optional_single_node_child(node.left.as_deref());
-        let right_id = self.visit_optional_single_node_child(node.right.as_deref());
+        let left_id = self.visit_optional_child(&node.left);
+        let right_id = self.visit_optional_child(&node.right);
 
         self.nodes.push(Node {
             id,
@@ -918,9 +915,9 @@ impl Visitor for Transformer {
 
     fn on_if_mod(&mut self, node: &lrp_nodes::IfMod) {
         let id = self.new_id();
-        let cond_id = self.visit_single_node_child(&node.cond);
-        let if_true_id = self.visit_optional_single_node_child(node.if_true.as_deref());
-        let if_false_id = self.visit_optional_single_node_child(node.if_false.as_deref());
+        let cond_id = self.visit_child(&node.cond);
+        let if_true_id = self.visit_optional_child(&node.if_true);
+        let if_false_id = self.visit_optional_child(&node.if_false);
 
         self.nodes.push(Node {
             id,
@@ -937,9 +934,9 @@ impl Visitor for Transformer {
 
     fn on_if_ternary(&mut self, node: &lrp_nodes::IfTernary) {
         let id = self.new_id();
-        let cond_id = self.visit_single_node_child(&node.cond);
-        let if_true_id = self.visit_single_node_child(&node.if_true);
-        let if_false_id = self.visit_single_node_child(&node.if_false);
+        let cond_id = self.visit_child(&node.cond);
+        let if_true_id = self.visit_child(&node.if_true);
+        let if_false_id = self.visit_child(&node.if_false);
 
         self.nodes.push(Node {
             id,
@@ -957,8 +954,8 @@ impl Visitor for Transformer {
 
     fn on_index(&mut self, node: &lrp_nodes::Index) {
         let id = self.new_id();
-        let recv_id = self.visit_single_node_child(&node.recv);
-        let index_ids = self.visit_vec_node_child(&node.indexes);
+        let recv_id = self.visit_child(&node.recv);
+        let index_ids = self.visit_children(&node.indexes);
 
         self.nodes.push(Node {
             id,
@@ -975,9 +972,9 @@ impl Visitor for Transformer {
 
     fn on_index_asgn(&mut self, node: &lrp_nodes::IndexAsgn) {
         let id = self.new_id();
-        let recv_id = self.visit_single_node_child(&node.recv);
-        let index_ids = self.visit_vec_node_child(&node.indexes);
-        let value_id = self.visit_optional_single_node_child(node.value.as_deref());
+        let recv_id = self.visit_child(&node.recv);
+        let index_ids = self.visit_children(&node.indexes);
+        let value_id = self.visit_optional_child(&node.value);
 
         self.nodes.push(Node {
             id,
@@ -996,9 +993,9 @@ impl Visitor for Transformer {
 
     fn on_in_pattern(&mut self, node: &lrp_nodes::InPattern) {
         let id = self.new_id();
-        let pattern_id = self.visit_single_node_child(&node.pattern);
-        let guard_id = self.visit_optional_single_node_child(node.guard.as_deref());
-        let body_id = self.visit_optional_single_node_child(node.body.as_deref());
+        let pattern_id = self.visit_child(&node.pattern);
+        let guard_id = self.visit_optional_child(&node.guard);
+        let body_id = self.visit_optional_child(&node.body);
 
         self.nodes.push(Node {
             id,
@@ -1030,8 +1027,8 @@ impl Visitor for Transformer {
 
     fn on_irange(&mut self, node: &lrp_nodes::Irange) {
         let id = self.new_id();
-        let left_id = self.visit_optional_single_node_child(node.left.as_deref());
-        let right_id = self.visit_optional_single_node_child(node.right.as_deref());
+        let left_id = self.visit_optional_child(&node.left);
+        let right_id = self.visit_optional_child(&node.right);
 
         self.nodes.push(Node {
             id,
@@ -1060,7 +1057,7 @@ impl Visitor for Transformer {
 
     fn on_ivasgn(&mut self, node: &lrp_nodes::Ivasgn) {
         let id = self.new_id();
-        let value_id = self.visit_optional_single_node_child(node.value.as_deref());
+        let value_id = self.visit_optional_child(&node.value);
 
         self.nodes.push(Node {
             id,
@@ -1091,7 +1088,7 @@ impl Visitor for Transformer {
 
     fn on_kwargs(&mut self, node: &lrp_nodes::Kwargs) {
         let id = self.new_id();
-        let pair_ids = self.visit_vec_node_child(&node.pairs);
+        let pair_ids = self.visit_children(&node.pairs);
 
         self.nodes.push(Node {
             id,
@@ -1103,7 +1100,7 @@ impl Visitor for Transformer {
 
     fn on_kw_begin(&mut self, node: &lrp_nodes::KwBegin) {
         let id = self.new_id();
-        let statement_ids = self.visit_vec_node_child(&node.statements);
+        let statement_ids = self.visit_children(&node.statements);
 
         self.nodes.push(Node {
             id,
@@ -1132,7 +1129,7 @@ impl Visitor for Transformer {
 
     fn on_kwoptarg(&mut self, node: &lrp_nodes::Kwoptarg) {
         let id = self.new_id();
-        let default_id = self.visit_single_node_child(&node.default);
+        let default_id = self.visit_child(&node.default);
 
         self.nodes.push(Node {
             id,
@@ -1163,7 +1160,7 @@ impl Visitor for Transformer {
 
     fn on_kwsplat(&mut self, node: &lrp_nodes::Kwsplat) {
         let id = self.new_id();
-        let value_id = self.visit_single_node_child(&node.value);
+        let value_id = self.visit_child(&node.value);
 
         self.nodes.push(Node {
             id,
@@ -1213,7 +1210,7 @@ impl Visitor for Transformer {
 
     fn on_lvasgn(&mut self, node: &lrp_nodes::Lvasgn) {
         let id = self.new_id();
-        let value_id = self.visit_optional_single_node_child(node.value.as_deref());
+        let value_id = self.visit_optional_child(&node.value);
 
         self.nodes.push(Node {
             id,
@@ -1230,8 +1227,8 @@ impl Visitor for Transformer {
 
     fn on_masgn(&mut self, node: &lrp_nodes::Masgn) {
         let id = self.new_id();
-        let lhs_id = self.visit_single_node_child(&node.lhs);
-        let rhs_id = self.visit_single_node_child(&node.rhs);
+        let lhs_id = self.visit_child(&node.lhs);
+        let rhs_id = self.visit_child(&node.rhs);
 
         self.nodes.push(Node {
             id,
@@ -1247,8 +1244,8 @@ impl Visitor for Transformer {
 
     fn on_match_alt(&mut self, node: &lrp_nodes::MatchAlt) {
         let id = self.new_id();
-        let lhs_id = self.visit_single_node_child(&node.lhs);
-        let rhs_id = self.visit_single_node_child(&node.rhs);
+        let lhs_id = self.visit_child(&node.lhs);
+        let rhs_id = self.visit_child(&node.rhs);
 
         self.nodes.push(Node {
             id,
@@ -1264,8 +1261,8 @@ impl Visitor for Transformer {
 
     fn on_match_as(&mut self, node: &lrp_nodes::MatchAs) {
         let id = self.new_id();
-        let value_id = self.visit_single_node_child(&node.value);
-        let as_id = self.visit_single_node_child(&node.as_);
+        let value_id = self.visit_child(&node.value);
+        let as_id = self.visit_child(&node.as_);
 
         self.nodes.push(Node {
             id,
@@ -1281,7 +1278,7 @@ impl Visitor for Transformer {
 
     fn on_match_current_line(&mut self, node: &lrp_nodes::MatchCurrentLine) {
         let id = self.new_id();
-        let re_id = self.visit_single_node_child(&node.re);
+        let re_id = self.visit_child(&node.re);
 
         self.nodes.push(Node {
             id,
@@ -1307,8 +1304,8 @@ impl Visitor for Transformer {
 
     fn on_match_pattern(&mut self, node: &lrp_nodes::MatchPattern) {
         let id = self.new_id();
-        let value_id = self.visit_single_node_child(&node.value);
-        let pattern_id = self.visit_single_node_child(&node.pattern);
+        let value_id = self.visit_child(&node.value);
+        let pattern_id = self.visit_child(&node.pattern);
 
         self.nodes.push(Node {
             id,
@@ -1324,8 +1321,8 @@ impl Visitor for Transformer {
 
     fn on_match_pattern_p(&mut self, node: &lrp_nodes::MatchPatternP) {
         let id = self.new_id();
-        let value_id = self.visit_single_node_child(&node.value);
-        let pattern_id = self.visit_single_node_child(&node.pattern);
+        let value_id = self.visit_child(&node.value);
+        let pattern_id = self.visit_child(&node.pattern);
 
         self.nodes.push(Node {
             id,
@@ -1341,7 +1338,7 @@ impl Visitor for Transformer {
 
     fn on_match_rest(&mut self, node: &lrp_nodes::MatchRest) {
         let id = self.new_id();
-        let name_id = self.visit_optional_single_node_child(node.name.as_deref());
+        let name_id = self.visit_optional_child(&node.name);
 
         self.nodes.push(Node {
             id,
@@ -1371,8 +1368,8 @@ impl Visitor for Transformer {
 
     fn on_match_with_lvasgn(&mut self, node: &lrp_nodes::MatchWithLvasgn) {
         let id = self.new_id();
-        let re_id = self.visit_single_node_child(&node.re);
-        let value_id = self.visit_single_node_child(&node.value);
+        let re_id = self.visit_child(&node.re);
+        let value_id = self.visit_child(&node.value);
 
         self.nodes.push(Node {
             id,
@@ -1388,7 +1385,7 @@ impl Visitor for Transformer {
 
     fn on_mlhs(&mut self, node: &lrp_nodes::Mlhs) {
         let id = self.new_id();
-        let item_ids = self.visit_vec_node_child(&node.items);
+        let item_ids = self.visit_children(&node.items);
 
         self.nodes.push(Node {
             id,
@@ -1404,13 +1401,13 @@ impl Visitor for Transformer {
 
     fn on_module(&mut self, node: &lrp_nodes::Module) {
         let id = self.new_id();
-        let name_id = self.visit_single_node_child(&node.name);
+        let name_id = self.visit_child(&node.name);
 
         let name = node.name_from_node();
         self.scope_gate
             .push_owned(ScopeGateNode::Module(name.clone()));
 
-        let body_id = self.visit_optional_single_node_child(node.body.as_deref());
+        let body_id = self.visit_optional_child(&node.body);
 
         self.scope_gate.pop();
 
@@ -1430,7 +1427,7 @@ impl Visitor for Transformer {
 
     fn on_next(&mut self, node: &lrp_nodes::Next) {
         let id = self.new_id();
-        let arg_ids = self.visit_vec_node_child(&node.args);
+        let arg_ids = self.visit_children(&node.args);
 
         self.nodes.push(Node {
             id,
@@ -1469,8 +1466,8 @@ impl Visitor for Transformer {
 
     fn on_numblock(&mut self, node: &lrp_nodes::Numblock) {
         let id = self.new_id();
-        let call_id = self.visit_single_node_child(&node.call);
-        let body_id = self.visit_single_node_child(&node.body);
+        let call_id = self.visit_child(&node.call);
+        let body_id = self.visit_child(&node.body);
 
         self.nodes.push(Node {
             id,
@@ -1488,8 +1485,8 @@ impl Visitor for Transformer {
 
     fn on_op_asgn(&mut self, node: &lrp_nodes::OpAsgn) {
         let id = self.new_id();
-        let recv_id = self.visit_single_node_child(&node.recv);
-        let value_id = self.visit_single_node_child(&node.value);
+        let recv_id = self.visit_child(&node.recv);
+        let value_id = self.visit_child(&node.value);
 
         self.nodes.push(Node {
             id,
@@ -1506,7 +1503,7 @@ impl Visitor for Transformer {
 
     fn on_optarg(&mut self, node: &lrp_nodes::Optarg) {
         let id = self.new_id();
-        let default_id = self.visit_single_node_child(&node.default);
+        let default_id = self.visit_child(&node.default);
 
         self.nodes.push(Node {
             id,
@@ -1523,8 +1520,8 @@ impl Visitor for Transformer {
 
     fn on_or(&mut self, node: &lrp_nodes::Or) {
         let id = self.new_id();
-        let lhs_id = self.visit_single_node_child(&node.lhs);
-        let rhs_id = self.visit_single_node_child(&node.rhs);
+        let lhs_id = self.visit_child(&node.lhs);
+        let rhs_id = self.visit_child(&node.rhs);
 
         self.nodes.push(Node {
             id,
@@ -1540,8 +1537,8 @@ impl Visitor for Transformer {
 
     fn on_or_asgn(&mut self, node: &lrp_nodes::OrAsgn) {
         let id = self.new_id();
-        let recv_id = self.visit_single_node_child(&node.recv);
-        let value_id = self.visit_single_node_child(&node.value);
+        let recv_id = self.visit_child(&node.recv);
+        let value_id = self.visit_child(&node.value);
 
         self.nodes.push(Node {
             id,
@@ -1557,8 +1554,8 @@ impl Visitor for Transformer {
 
     fn on_pair(&mut self, node: &lrp_nodes::Pair) {
         let id = self.new_id();
-        let key_id = self.visit_single_node_child(&node.key);
-        let value_id = self.visit_single_node_child(&node.value);
+        let key_id = self.visit_child(&node.key);
+        let value_id = self.visit_child(&node.value);
 
         self.nodes.push(Node {
             id,
@@ -1574,7 +1571,7 @@ impl Visitor for Transformer {
 
     fn on_pin(&mut self, node: &lrp_nodes::Pin) {
         let id = self.new_id();
-        let var_id = self.visit_single_node_child(&node.var);
+        let var_id = self.visit_child(&node.var);
 
         self.nodes.push(Node {
             id,
@@ -1589,7 +1586,7 @@ impl Visitor for Transformer {
 
     fn on_postexe(&mut self, node: &lrp_nodes::Postexe) {
         let id = self.new_id();
-        let body_id = self.visit_optional_single_node_child(node.body.as_deref());
+        let body_id = self.visit_optional_child(&node.body);
 
         self.nodes.push(Node {
             id,
@@ -1606,7 +1603,7 @@ impl Visitor for Transformer {
 
     fn on_preexe(&mut self, node: &lrp_nodes::Preexe) {
         let id = self.new_id();
-        let body_id = self.visit_optional_single_node_child(node.body.as_deref());
+        let body_id = self.visit_optional_child(&node.body);
 
         self.nodes.push(Node {
             id,
@@ -1623,7 +1620,7 @@ impl Visitor for Transformer {
 
     fn on_procarg0(&mut self, node: &lrp_nodes::Procarg0) {
         let id = self.new_id();
-        let arg_ids = self.visit_vec_node_child(&node.args);
+        let arg_ids = self.visit_children(&node.args);
 
         self.nodes.push(Node {
             id,
@@ -1664,8 +1661,8 @@ impl Visitor for Transformer {
 
     fn on_regexp(&mut self, node: &lrp_nodes::Regexp) {
         let id = self.new_id();
-        let part_ids = self.visit_vec_node_child(&node.parts);
-        let options_id = self.visit_optional_single_node_child(node.options.as_deref());
+        let part_ids = self.visit_children(&node.parts);
+        let options_id = self.visit_optional_child(&node.options);
 
         self.nodes.push(Node {
             id,
@@ -1695,9 +1692,9 @@ impl Visitor for Transformer {
 
     fn on_rescue(&mut self, node: &lrp_nodes::Rescue) {
         let id = self.new_id();
-        let body_id = self.visit_optional_single_node_child(node.body.as_deref());
-        let rescue_body_ids = self.visit_vec_node_child(&node.rescue_bodies);
-        let else_id = self.visit_optional_single_node_child(node.else_.as_deref());
+        let body_id = self.visit_optional_child(&node.body);
+        let rescue_body_ids = self.visit_children(&node.rescue_bodies);
+        let else_id = self.visit_optional_child(&node.else_);
 
         self.nodes.push(Node {
             id,
@@ -1714,9 +1711,9 @@ impl Visitor for Transformer {
 
     fn on_rescue_body(&mut self, node: &lrp_nodes::RescueBody) {
         let id = self.new_id();
-        let exc_list_id = self.visit_optional_single_node_child(node.exc_list.as_deref());
-        let exc_var_id = self.visit_optional_single_node_child(node.exc_var.as_deref());
-        let body_id = self.visit_optional_single_node_child(node.body.as_deref());
+        let exc_list_id = self.visit_optional_child(&node.exc_list);
+        let exc_var_id = self.visit_optional_child(&node.exc_var);
+        let body_id = self.visit_optional_child(&node.body);
 
         self.nodes.push(Node {
             id,
@@ -1761,7 +1758,7 @@ impl Visitor for Transformer {
 
     fn on_return(&mut self, node: &lrp_nodes::Return) {
         let id = self.new_id();
-        let arg_ids = self.visit_vec_node_child(&node.args);
+        let arg_ids = self.visit_children(&node.args);
 
         self.nodes.push(Node {
             id,
@@ -1776,8 +1773,8 @@ impl Visitor for Transformer {
 
     fn on_s_class(&mut self, node: &lrp_nodes::SClass) {
         let id = self.new_id();
-        let expr_id = self.visit_single_node_child(&node.expr);
-        let body_id = self.visit_optional_single_node_child(node.body.as_deref());
+        let expr_id = self.visit_child(&node.expr);
+        let body_id = self.visit_optional_child(&node.body);
 
         self.nodes.push(Node {
             id,
@@ -1806,8 +1803,8 @@ impl Visitor for Transformer {
 
     fn on_send(&mut self, node: &lrp_nodes::Send) {
         let id = self.new_id();
-        let recv_id = self.visit_optional_single_node_child(node.recv.as_deref());
-        let arg_ids = self.visit_vec_node_child(&node.args);
+        let recv_id = self.visit_optional_child(&node.recv);
+        let arg_ids = self.visit_children(&node.args);
 
         self.nodes.push(Node {
             id,
@@ -1841,7 +1838,7 @@ impl Visitor for Transformer {
 
     fn on_splat(&mut self, node: &lrp_nodes::Splat) {
         let id = self.new_id();
-        let value_id = self.visit_optional_single_node_child(node.value.as_deref());
+        let value_id = self.visit_optional_child(&node.value);
 
         self.nodes.push(Node {
             id,
@@ -1872,7 +1869,7 @@ impl Visitor for Transformer {
 
     fn on_super(&mut self, node: &lrp_nodes::Super) {
         let id = self.new_id();
-        let arg_ids = self.visit_vec_node_child(&node.args);
+        let arg_ids = self.visit_children(&node.args);
 
         self.nodes.push(Node {
             id,
@@ -1916,7 +1913,7 @@ impl Visitor for Transformer {
 
     fn on_undef(&mut self, node: &lrp_nodes::Undef) {
         let id = self.new_id();
-        let name_ids = self.visit_vec_node_child(&node.names);
+        let name_ids = self.visit_children(&node.names);
 
         self.nodes.push(Node {
             id,
@@ -1931,7 +1928,7 @@ impl Visitor for Transformer {
 
     fn on_unless_guard(&mut self, node: &lrp_nodes::UnlessGuard) {
         let id = self.new_id();
-        let cond_id = self.visit_single_node_child(&node.cond);
+        let cond_id = self.visit_child(&node.cond);
 
         self.nodes.push(Node {
             id,
@@ -1946,8 +1943,8 @@ impl Visitor for Transformer {
 
     fn on_until(&mut self, node: &lrp_nodes::Until) {
         let id = self.new_id();
-        let cond_id = self.visit_single_node_child(&node.cond);
-        let body_id = self.visit_optional_single_node_child(node.body.as_deref());
+        let cond_id = self.visit_child(&node.cond);
+        let body_id = self.visit_optional_child(&node.body);
 
         self.nodes.push(Node {
             id,
@@ -1965,8 +1962,8 @@ impl Visitor for Transformer {
 
     fn on_until_post(&mut self, node: &lrp_nodes::UntilPost) {
         let id = self.new_id();
-        let cond_id = self.visit_single_node_child(&node.cond);
-        let body_id = self.visit_single_node_child(&node.body);
+        let cond_id = self.visit_child(&node.cond);
+        let body_id = self.visit_child(&node.body);
 
         self.nodes.push(Node {
             id,
@@ -1982,8 +1979,8 @@ impl Visitor for Transformer {
 
     fn on_when(&mut self, node: &lrp_nodes::When) {
         let id = self.new_id();
-        let pattern_ids = self.visit_vec_node_child(&node.patterns);
-        let body_id = self.visit_optional_single_node_child(node.body.as_deref());
+        let pattern_ids = self.visit_children(&node.patterns);
+        let body_id = self.visit_optional_child(&node.body);
 
         self.nodes.push(Node {
             id,
@@ -2000,8 +1997,8 @@ impl Visitor for Transformer {
 
     fn on_while(&mut self, node: &lrp_nodes::While) {
         let id = self.new_id();
-        let cond_id = self.visit_single_node_child(&node.cond);
-        let body_id = self.visit_optional_single_node_child(node.body.as_deref());
+        let cond_id = self.visit_child(&node.cond);
+        let body_id = self.visit_optional_child(&node.body);
 
         self.nodes.push(Node {
             id,
@@ -2019,8 +2016,8 @@ impl Visitor for Transformer {
 
     fn on_while_post(&mut self, node: &lrp_nodes::WhilePost) {
         let id = self.new_id();
-        let cond_id = self.visit_single_node_child(&node.cond);
-        let body_id = self.visit_single_node_child(&node.body);
+        let cond_id = self.visit_child(&node.cond);
+        let body_id = self.visit_child(&node.body);
 
         self.nodes.push(Node {
             id,
@@ -2036,7 +2033,7 @@ impl Visitor for Transformer {
 
     fn on_x_heredoc(&mut self, node: &lrp_nodes::XHeredoc) {
         let id = self.new_id();
-        let part_ids = self.visit_vec_node_child(&node.parts);
+        let part_ids = self.visit_children(&node.parts);
 
         self.nodes.push(Node {
             id,
@@ -2052,7 +2049,7 @@ impl Visitor for Transformer {
 
     fn on_xstr(&mut self, node: &lrp_nodes::Xstr) {
         let id = self.new_id();
-        let part_ids = self.visit_vec_node_child(&node.parts);
+        let part_ids = self.visit_children(&node.parts);
 
         self.nodes.push(Node {
             id,
@@ -2068,7 +2065,7 @@ impl Visitor for Transformer {
 
     fn on_yield(&mut self, node: &lrp_nodes::Yield) {
         let id = self.new_id();
-        let arg_ids = self.visit_vec_node_child(&node.args);
+        let arg_ids = self.visit_children(&node.args);
 
         self.nodes.push(Node {
             id,
