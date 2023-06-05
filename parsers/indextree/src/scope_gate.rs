@@ -18,7 +18,7 @@ impl ScopeGate {
     /// Creates a new `ScopeGate` by combining `self` with `scope_name_node`.
     ///
     /// ```
-    /// use ruby_analyzer::scope_gate::{ScopeGate, Node};
+    /// use ruby_analyzer_indextree_parser::scope_gate::{ScopeGate, Node};
     ///
     /// let scope_gate = ScopeGate::new(vec![Node::Class("Foo".to_string())]);
     /// let sg2 = scope_gate.join(Node::Def("bar".to_string()));

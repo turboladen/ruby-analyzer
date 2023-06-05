@@ -1,0 +1,16 @@
+[package]
+name = "ruby-analyzer-tbc_parser"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+lib-ruby-parser = "4.0.4"
+lsp-types = "0.94.0"
+ropey = "1.6.0"
+salsa = { package = "salsa-2022", git = "https://github.com/salsa-rs/salsa" }
+tracing = { version = "0.1.37", features = ["log"] }
+
+[dev-dependencies]
+tracing-test = "0.2.4"

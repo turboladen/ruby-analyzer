@@ -65,6 +65,7 @@ pub struct ArrayPatternWithTail {
 pub struct BackRef {
     pub(crate) name: String,
 }
+
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub struct Begin {
     pub(crate) statement_ids: Vec<usize>,
