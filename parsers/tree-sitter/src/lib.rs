@@ -7,4 +7,3 @@ pub struct Jar(
     crate::parser::Diagnostics,
     crate::parser::parse,
 );
-

@@ -351,7 +351,7 @@ impl Visitor for Transformer {
         self.insert_scope_node(Node {
             id,
             properties: NodeProperties::Class(Class {
-                name: name.clone(),
+                name,
                 name_id,
                 superclass_id,
                 body_id,

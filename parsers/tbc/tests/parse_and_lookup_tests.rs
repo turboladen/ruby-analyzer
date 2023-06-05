@@ -47,7 +47,7 @@ end"#;
     // Validate root node
     #[test]
     fn test_root_class_node() {
-        let (loc_nodes, index) = setup();
+        let (_loc_nodes, _index) = setup();
 
         // let root = arena.iter().next().unwrap();
 
