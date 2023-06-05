@@ -1,7 +1,2 @@
 [workspace]
-members = [
-  "basic_parser",
-  "indextree_parser",
-  "tree-sitter_parser",
-  "tbc_parser",
-]
+members = ["parsers/*"]
