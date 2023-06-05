@@ -31,6 +31,7 @@ pub enum NodeType {
     Dstr,
     Dsym,
     EFlipFlop,
+    EmptyBody,
     EmptyElse,
     Encoding,
     Ensure,

@@ -1,10 +1,10 @@
 use std::collections::btree_map::Entry;
 
 use lib_ruby_parser::{nodes as lrp_nodes, traverse::visitor::Visitor};
-use tracing::debug;
+use tracing::trace;
 
 use crate::{
-    location::{LocNode, NodeType},
+    location::{Loc, LocNode, NodeType},
     lrp_extensions::{NameFromNode, OptionNameFromNode},
     scoped_index::{nodes::*, Node, NodeProperties, ScopedIndex},
     ScopeGate, ScopeGateNode,
@@ -85,19 +85,26 @@ impl Transformer {
     {
         func(self);
 
-        debug!("Current scope gate: {:?}", &self.current_scope_gate);
-        debug!("scoped_index: {:?}", &self.scoped_index);
-
         self.scoped_index
-            .inner()
             .get(&self.current_scope_gate)
             .and_then(|nodes| nodes.last().map(|node| node.id()))
             .unwrap()
-        // self.scoped_index
-        //     .inner()
-        //     .get(&self.current_scope_gate)
-        //     .and_then(|nodes| nodes.last().map(|node| node.id()))
-        //     .unwrap_or(0)
+    }
+
+    fn make_empty_body(&mut self, begin: usize, end: usize) {
+        self.locs.push(LocNode {
+            node: NodeType::EmptyBody,
+            name: String::new(),
+            expression_l: Loc { begin, end },
+            scope_gate: self.current_scope_gate.clone(),
+        });
+
+        let id = self.new_id();
+
+        self.insert_scope_node(Node {
+            id,
+            properties: NodeProperties::EmptyBody,
+        });
     }
 }
 
@@ -311,9 +318,12 @@ impl Visitor for Transformer {
     }
 
     fn on_class(&mut self, node: &lrp_nodes::Class) {
+        let name = node.name_from_node();
+
         self.locs.push(LocNode {
-            expression_l: node.expression_l.into(),
             node: NodeType::Class,
+            name: name.clone(),
+            expression_l: node.expression_l.into(),
             scope_gate: self.current_scope_gate.clone(),
         });
 
@@ -326,8 +336,14 @@ impl Visitor for Transformer {
         let name_id = self.visit_child(&node.name);
         let superclass_id = self.visit_optional_child(&node.superclass);
 
-        let body_id = self.do_in_scope(ScopeGateNode::Class(node.name_from_node()), |me| {
-            me.visit_optional_child(&node.body)
+        let body_id = self.do_in_scope(ScopeGateNode::Class(name.clone()), |me| {
+            let result = me.visit_optional_child(&node.body);
+
+            if result.is_none() {
+                me.make_empty_body(node.keyword_l.end + 1, node.end_l.begin - 1);
+            }
+
+            result
         });
 
         // Do this after visiting the class's children, so we can add the child IDs to the class
@@ -335,7 +351,7 @@ impl Visitor for Transformer {
         self.insert_scope_node(Node {
             id,
             properties: NodeProperties::Class(Class {
-                name: node.name_from_node(),
+                name: name.clone(),
                 name_id,
                 superclass_id,
                 body_id,
@@ -422,8 +438,9 @@ impl Visitor for Transformer {
 
     fn on_def(&mut self, node: &lrp_nodes::Def) {
         self.locs.push(LocNode {
-            expression_l: node.expression_l.into(),
             node: NodeType::Def,
+            name: node.name.clone(),
+            expression_l: node.expression_l.into(),
             scope_gate: self.current_scope_gate.clone(),
         });
 
@@ -434,7 +451,19 @@ impl Visitor for Transformer {
         let args_id = self.visit_optional_child(&node.args);
 
         let body_id = self.do_in_scope(ScopeGateNode::Def(node.name.clone()), |me| {
-            me.visit_optional_child(&node.body)
+            let result = me.visit_optional_child(&node.body);
+
+            if result.is_none() {
+                let begin = node.name_l.end + 1;
+                let end = match node.end_l {
+                    Some(end_l) => end_l.begin - 1,
+                    None => node.expression_l.end - 1,
+                };
+
+                me.make_empty_body(begin, end);
+            }
+
+            result
         });
 
         // Do this after visiting the def's children, so we can add the child IDs to the class
@@ -461,8 +490,9 @@ impl Visitor for Transformer {
 
     fn on_defs(&mut self, node: &lrp_nodes::Defs) {
         self.locs.push(LocNode {
-            expression_l: node.expression_l.into(),
             node: NodeType::Defs,
+            name: node.name.clone(),
+            expression_l: node.expression_l.into(),
             scope_gate: self.current_scope_gate.clone(),
         });
 
@@ -474,7 +504,19 @@ impl Visitor for Transformer {
         let args_id = self.visit_optional_child(&node.args);
 
         let body_id = self.do_in_scope(ScopeGateNode::Defs(node.name.clone()), |me| {
-            me.visit_optional_child(&node.body)
+            let result = me.visit_optional_child(&node.body);
+
+            if result.is_none() {
+                let begin = node.name_l.end + 1;
+                let end = match node.end_l {
+                    Some(end_l) => end_l.begin - 1,
+                    None => node.expression_l.end - 1,
+                };
+
+                me.make_empty_body(begin, end);
+            }
+
+            result
         });
 
         // Do this after visiting the def's children, so we can add the child IDs to the class
@@ -1088,11 +1130,16 @@ impl Visitor for Transformer {
     }
 
     fn on_module(&mut self, node: &lrp_nodes::Module) {
+        trace!("Adding LocNode for module {}", node.name_from_node());
+        let name = node.name_from_node();
+
         self.locs.push(LocNode {
-            expression_l: node.expression_l.into(),
             node: NodeType::Module,
+            name: name.clone(),
+            expression_l: node.expression_l.into(),
             scope_gate: self.current_scope_gate.clone(),
         });
+        trace!("self.locs is now {:#?}", &self.locs);
 
         // Not sure it matters in practice, but let's just keep the class's ID a lower number than
         // its children that were about to visit.
@@ -1100,8 +1147,14 @@ impl Visitor for Transformer {
 
         let name_id = self.visit_child(&node.name);
 
-        let body_id = self.do_in_scope(ScopeGateNode::Module(node.name_from_node()), |me| {
-            me.visit_optional_child(&node.body)
+        let body_id = self.do_in_scope(ScopeGateNode::Module(name.clone()), |me| {
+            let result = me.visit_optional_child(&node.body);
+
+            if result.is_none() {
+                me.make_empty_body(node.keyword_l.end + 1, node.end_l.begin - 1);
+            }
+
+            result
         });
 
         // Do this after visiting the def's children, so we can add the child IDs to the class
@@ -1109,7 +1162,7 @@ impl Visitor for Transformer {
         self.insert_scope_node(Node {
             id,
             properties: NodeProperties::Module(Module {
-                name: node.name_from_node(),
+                name,
                 name_id,
                 body_id,
             }),

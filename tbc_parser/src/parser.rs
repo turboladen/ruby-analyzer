@@ -97,12 +97,12 @@ mod tests {
         let file_source = FileSource::new(&db, file_uri, code);
 
         let (loc_nodes, index) = parse(&db, file_source);
-        assert_eq!(1, loc_nodes.len());
-        assert_eq!(1, index.inner().len());
+        assert_eq!(2, loc_nodes.len());
+        assert_eq!(2, index.len());
 
         let (loc_nodes, index) = parse(&db, file_source);
-        assert_eq!(1, loc_nodes.len());
-        assert_eq!(1, index.inner().len());
+        assert_eq!(2, loc_nodes.len());
+        assert_eq!(2, index.len());
     }
 
     #[test]
@@ -115,6 +115,7 @@ mod tests {
 
         let (loc_nodes, index) = parse(&db, file_source);
         assert!(loc_nodes.is_empty());
+        assert_eq!(1, index.len());
 
         let diags = parse::accumulated::<Diagnostics>(&db, file_source);
         assert_eq!(diags.len(), 1);

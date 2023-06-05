@@ -2,6 +2,7 @@ pub mod db;
 pub mod location;
 pub(crate) mod lrp_extensions;
 pub mod parser;
+pub mod queries;
 pub mod scope_gate;
 pub mod scoped_index;
 pub(crate) mod transformer;
@@ -19,6 +20,6 @@ pub struct Jar(
     crate::parser::parse,
     crate::parser::inner_transform,
     crate::parser::NodeSource,
-    // crate::queries::ClosestNodeQuery,
-    // crate::queries::find_namespace,
+    crate::queries::ClosestNodeQuery,
+    crate::queries::find_scope_gate,
 );
