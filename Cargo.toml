@@ -1,2 +1,2 @@
 [workspace]
-members = ["parsers/*"]
+members = ["crates/*", "poc-parsers/*"]
