@@ -14,6 +14,7 @@ use tower_lsp::{
     },
     Client,
 };
+use tracing::debug;
 
 pub(crate) struct Session {
     client: Client,
@@ -58,6 +59,11 @@ impl Session {
                     *state = DocumentOpenState::Open;
                 })
                 .or_insert(DocumentOpenState::Open);
+
+            debug!(
+                "ruby_document_open_states: {:#?}",
+                self.ruby_document_open_states
+            );
         }
 
         let code = Rope::from_str(&text_document_item.text);

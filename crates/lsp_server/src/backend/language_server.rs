@@ -77,6 +77,8 @@ impl LanguageServer for Backend {
     }
 
     async fn did_open(&self, params: DidOpenTextDocumentParams) {
+        debug!("Server opened file {}", params.text_document.uri);
+
         if let "ruby" = params.text_document.language_id.as_str() {
             self.session.open_ruby_document(params.text_document).await;
         }
