@@ -1,5 +1,5 @@
 [package]
-name = "ruby-analyzer-basic_parser"
+name = "ruby_analyzer-basic_parser"
 version = "0.1.0"
 edition = "2021"
 

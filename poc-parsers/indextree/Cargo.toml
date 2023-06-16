@@ -1,5 +1,5 @@
 [package]
-name = "ruby-analyzer-indextree_parser"
+name = "ruby_analyzer-indextree_parser"
 version = "0.1.0"
 edition = "2021"
 
