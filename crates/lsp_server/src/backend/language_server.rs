@@ -1,8 +1,8 @@
 use tower_lsp::{
     jsonrpc::Result,
     lsp_types::{
-        DidOpenTextDocumentParams, InitializeParams, InitializeResult, InitializedParams,
-        MessageType, ServerCapabilities, ServerInfo, TextDocumentSyncCapability,
+        DidCloseTextDocumentParams, DidOpenTextDocumentParams, InitializeParams, InitializeResult,
+        InitializedParams, MessageType, ServerCapabilities, ServerInfo, TextDocumentSyncCapability,
         TextDocumentSyncKind,
     },
     LanguageServer,
@@ -77,11 +77,21 @@ impl LanguageServer for Backend {
     }
 
     async fn did_open(&self, params: DidOpenTextDocumentParams) {
-        debug!("Server opened file {}", params.text_document.uri);
+        debug!("Client opened file {}", params.text_document.uri);
 
         if let "ruby" = params.text_document.language_id.as_str() {
             self.session.open_ruby_document(params.text_document).await;
         }
+    }
+
+    async fn did_close(&self, params: DidCloseTextDocumentParams) {
+        debug!("Client closed file {}", params.text_document.uri);
+
+        // We don't get an indication of which language the closed file was, so once we deal with
+        // more than ruby files (i.e. rbs), the following code should update all the collections.
+        self.session
+            .close_ruby_document(params.text_document.uri)
+            .await;
     }
 
     async fn shutdown(&self) -> Result<()> {

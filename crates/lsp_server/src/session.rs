@@ -110,6 +110,20 @@ impl Session {
             )
             .await;
     }
+
+    pub(crate) async fn close_ruby_document(&self, uri: Url) {
+        self.ruby_document_open_states
+            .entry(uri)
+            .and_modify(|state| {
+                *state = DocumentOpenState::Closed;
+            })
+            .or_insert(DocumentOpenState::Closed);
+
+        debug!(
+            "ruby_document_open_states: {:#?}",
+            self.ruby_document_open_states
+        );
+    }
 }
 
 fn lsp_range_from_ts_range(ts_range: tree_sitter::Range) -> lsp_types::Range {
