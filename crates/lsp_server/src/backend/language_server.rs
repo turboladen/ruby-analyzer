@@ -1,9 +1,9 @@
 use tower_lsp::{
     jsonrpc::Result,
     lsp_types::{
-        DidCloseTextDocumentParams, DidOpenTextDocumentParams, InitializeParams, InitializeResult,
-        InitializedParams, MessageType, ServerCapabilities, ServerInfo, TextDocumentSyncCapability,
-        TextDocumentSyncKind,
+        DidChangeTextDocumentParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
+        InitializeParams, InitializeResult, InitializedParams, MessageType, ServerCapabilities,
+        ServerInfo, TextDocumentSyncCapability, TextDocumentSyncKind,
     },
     LanguageServer,
 };
@@ -76,6 +76,16 @@ impl LanguageServer for Backend {
             .await;
     }
 
+    async fn shutdown(&self) -> Result<()> {
+        debug!("Server shutdown");
+
+        self.client()
+            .log_message(MessageType::INFO, "ruby_analyzer server shut down")
+            .await;
+
+        Ok(())
+    }
+
     async fn did_open(&self, params: DidOpenTextDocumentParams) {
         debug!("Client opened file {}", params.text_document.uri);
 
@@ -89,18 +99,18 @@ impl LanguageServer for Backend {
 
         // We don't get an indication of which language the closed file was, so once we deal with
         // more than ruby files (i.e. rbs), the following code should update all the collections.
+        // self.session.close_ruby_document(params.text_document.uri);
         self.session
-            .close_ruby_document(params.text_document.uri)
-            .await;
+            .ruby_document_open_states()
+            .close(params.text_document.uri);
     }
 
-    async fn shutdown(&self) -> Result<()> {
-        debug!("Server shutdown");
+    async fn did_change(&self, params: DidChangeTextDocumentParams) {
+        debug!("Client changed file {}", params.text_document.uri);
 
-        self.client()
-            .log_message(MessageType::INFO, "ruby_analyzer server shut down")
-            .await;
-
-        Ok(())
+        // We don't get an indication of which language the changed file was, so once we deal with
+        // more than ruby files (i.e. rbs), the following code should update all the collections.
+        self.session
+            .change_ruby_document(params.text_document, params.content_changes);
     }
 }

@@ -8,19 +8,19 @@ use crate::session::Session;
 
 /// Defines the logic for handling LSP requests.
 ///
-pub(crate) struct Backend {
+pub struct Backend {
     session: Arc<Session>,
 }
 
 impl Backend {
     #[must_use]
-    pub(crate) fn new(client: Client) -> Self {
+    pub fn new(client: Client) -> Self {
         Self {
             session: Arc::new(Session::new(client)),
         }
     }
 
-    fn client(&self) -> &Client {
+    pub fn client(&self) -> &Client {
         self.session.client()
     }
 }
