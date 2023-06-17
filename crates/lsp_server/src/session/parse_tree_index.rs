@@ -18,7 +18,7 @@ pub(crate) struct ParseTreeIndex {
 }
 
 impl ParseTreeIndex {
-    pub(crate) fn do_full_parse<F>(
+    pub(crate) async fn do_full_parse<F>(
         &self,
         uri: Url,
         code: &Rope,
@@ -41,7 +41,7 @@ impl ParseTreeIndex {
                     new_end_position,
                 };
 
-                let mut old_tree = entry.get().blocking_write();
+                let mut old_tree = entry.get().write().await;
                 old_tree.edit(&input_edit);
 
                 // TODO: I don't think `parse()` needs to care about returning anything else but the Tree.

@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use dashmap::DashMap;
+use dashmap::{mapref::entry::Entry, DashMap};
 use tokio::sync::RwLock;
 use tower_lsp::lsp_types::Url;
 
@@ -18,23 +18,27 @@ pub(crate) struct DocumentOpenStateIndex {
 }
 
 impl DocumentOpenStateIndex {
-    pub(crate) fn open(&self, uri: Url) {
-        self.inner
-            .entry(uri)
-            .and_modify(|rw_lock| {
-                let mut state = rw_lock.blocking_write();
+    pub(crate) async fn open(&self, uri: Url) {
+        match self.inner.entry(uri) {
+            Entry::Occupied(entry) => {
+                let mut state = entry.get().write().await;
                 *state = DocumentOpenState::Open;
-            })
-            .or_insert(RwLock::new(DocumentOpenState::Open));
+            }
+            Entry::Vacant(entry) => {
+                entry.insert(RwLock::new(DocumentOpenState::Open));
+            }
+        }
     }
 
-    pub(crate) fn close(&self, uri: Url) {
-        self.inner
-            .entry(uri)
-            .and_modify(|rw_lock| {
-                let mut state = rw_lock.blocking_write();
+    pub(crate) async fn close(&self, uri: Url) {
+        match self.inner.entry(uri) {
+            Entry::Occupied(entry) => {
+                let mut state = entry.get().write().await;
                 *state = DocumentOpenState::Closed;
-            })
-            .or_insert(RwLock::new(DocumentOpenState::Closed));
+            }
+            Entry::Vacant(entry) => {
+                entry.insert(RwLock::new(DocumentOpenState::Closed));
+            }
+        }
     }
 }

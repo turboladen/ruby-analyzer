@@ -1,6 +1,5 @@
 pub(crate) mod backend;
 pub(crate) mod language;
-pub(crate) mod project;
 pub(crate) mod ropey_ext;
 pub(crate) mod session;
 

@@ -102,7 +102,8 @@ impl LanguageServer for Backend {
         // self.session.close_ruby_document(params.text_document.uri);
         self.session
             .ruby_document_open_states()
-            .close(params.text_document.uri);
+            .close(params.text_document.uri)
+            .await;
     }
 
     async fn did_change(&self, params: DidChangeTextDocumentParams) {
@@ -111,6 +112,7 @@ impl LanguageServer for Backend {
         // We don't get an indication of which language the changed file was, so once we deal with
         // more than ruby files (i.e. rbs), the following code should update all the collections.
         self.session
-            .change_ruby_document(params.text_document, params.content_changes);
+            .change_ruby_document(params.text_document, params.content_changes)
+            .await;
     }
 }

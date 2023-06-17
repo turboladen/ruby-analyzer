@@ -1,14 +1,7 @@
-pub(crate) mod backend;
-pub(crate) mod language;
-pub(crate) mod project;
-pub(crate) mod session;
-
 use tower_lsp::{LspService, Server};
 use tracing_appender::non_blocking::WorkerGuard;
 
-use self::backend::Backend;
-
-pub(crate) const PACKAGE_NAME: &str = env!("CARGO_PKG_NAME");
+use ruby_analyzer_lsp_server::Backend;
 
 #[tokio::main]
 async fn main() {

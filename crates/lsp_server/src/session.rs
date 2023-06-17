@@ -11,6 +11,9 @@ use tower_lsp::{
     },
     Client,
 };
+use tracing::{debug, trace};
+
+use crate::ropey_ext::Endings;
 
 use self::{
     document_open_state_index::DocumentOpenStateIndex, document_text_index::DocumentTextIndex,
@@ -52,26 +55,40 @@ impl Session {
     pub(crate) async fn open_ruby_document(&self, text_document_item: TextDocumentItem) {
         // Keep track that the client has the doc open.
         self.ruby_document_open_states
-            .open(text_document_item.uri.clone());
+            .open(text_document_item.uri.clone())
+            .await;
 
         let code = Rope::from_str(&text_document_item.text);
 
         // Store the file->code relationship.
-        self.ruby_document_texts.store_full_text(
-            text_document_item.uri.clone(),
-            text_document_item.version,
-            code.clone(),
-        );
+        self.ruby_document_texts
+            .store_full_text(
+                text_document_item.uri.clone(),
+                text_document_item.version,
+                code.clone(),
+            )
+            .await;
 
-        // // Store the file->tree relationship.
-        let diagnostics =
-            self.ruby_parse_trees
-                .do_full_parse(text_document_item.uri.clone(), &code, || {
-                    self.ruby_document_texts
-                        .end_byte_and_point(&text_document_item.uri)
-                        .unwrap_or_default()
-                });
+        // TODO: Ideally, this is only computed if the `do_full_parse` call needs it,
+        // but it needs to be async and I'm not sure yet how to pass an async closure to a function
+        // (can you??)
+        let end_byte_and_point = self
+            .ruby_document_texts
+            .end_byte_and_point(&text_document_item.uri)
+            .await
+            .unwrap_or_default();
 
+        // Store the file->tree relationship.
+        let diagnostics = self
+            .ruby_parse_trees
+            .do_full_parse(text_document_item.uri.clone(), &code, || end_byte_and_point)
+            .await;
+
+        debug!("Got diagnostics during didOpen: {:?}", &diagnostics);
+
+        // NOTE: Sending these even if they're empty is good; it's the server's job for maintaining
+        // the state of diagnostics tied to a file. Once the server sends them, the client renders
+        // them, the server has to tell the client that the diagnostics can be cleared.
         self.client
             .publish_diagnostics(
                 text_document_item.uri,
@@ -81,29 +98,64 @@ impl Session {
             .await;
     }
 
-    pub(crate) fn change_ruby_document(
+    pub(crate) async fn change_ruby_document(
         &self,
         identifier: VersionedTextDocumentIdentifier,
         content_changes: Vec<TextDocumentContentChangeEvent>,
     ) {
+        // TODO: Move to DocumentTextIndex.
         match self.ruby_document_texts.get(&identifier.uri) {
             Some(rw_lock) => {
-                let mut doc = rw_lock.blocking_write();
+                let mut doc = rw_lock.write().await;
+
+                if identifier.version <= doc.version {
+                    // TODO: Handle more gracefully.
+                    panic!("Got update for older doc");
+                }
 
                 for content_change in content_changes {
                     match content_change.range {
                         Some(range) => {
-                            todo!("Update the existing Rope and parse tree");
+                            doc.merge_for_change_unchecked(
+                                identifier.version,
+                                &range,
+                                &content_change.text,
+                            );
                         }
                         None => {
-                            // Set the existing rope to
-                            // entry.
+                            // Set the existing rope to entry.
+                            doc.replace_for_change_unchecked(
+                                identifier.version,
+                                &content_change.text,
+                            );
                         }
                     }
                 }
             }
-            None => todo!(),
-        }
+            None => {
+                // TODO: Probably should handle this by just storing the things as if they were new?
+                panic!("Got change notices for unknown doc");
+            }
+        };
+
+        trace!("[didChange] Done updating text");
+        eprintln!("[didChange] Done updating text");
+
+        let rw_lock = self.ruby_document_texts.get(&identifier.uri).unwrap();
+        let doc = rw_lock.read().await;
+
+        let diagnostics = self
+            .ruby_parse_trees
+            .do_full_parse(identifier.uri.clone(), doc.code(), || {
+                doc.code.end_byte_and_point()
+            })
+            .await;
+
+        debug!("Got diagnostics during didChange: {:?}", &diagnostics);
+
+        self.client
+            .publish_diagnostics(identifier.uri, diagnostics, Some(identifier.version))
+            .await;
     }
 
     pub(crate) fn ruby_document_open_states(&self) -> &DocumentOpenStateIndex {
