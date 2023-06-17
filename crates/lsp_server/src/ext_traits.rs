@@ -1,4 +1,5 @@
-//! This module provides extension traits for making it easier to work with `Rope`s and other types.
+//! This module provides extension traits for making it easier to work with external types that we
+//! need to convert to other external types.
 //!
 use ropey::Rope;
 use tower_lsp::lsp_types;
@@ -50,5 +51,26 @@ impl GetCharOffset for Rope {
     fn get_char_offset(&self, lsp_position: &lsp_types::Position) -> usize {
         self.line_to_char(usize::try_from(lsp_position.line).unwrap())
             + usize::try_from(lsp_position.character).unwrap()
+    }
+}
+
+/// Trait for converting `tree-sitter` types to types that we want.
+///
+pub(crate) trait FromTs<T> {
+    fn from_ts(ts_type: T) -> Self;
+}
+
+impl FromTs<tree_sitter::Range> for lsp_types::Range {
+    fn from_ts(ts_type: tree_sitter::Range) -> Self {
+        lsp_types::Range {
+            start: lsp_types::Position {
+                line: u32::try_from(ts_type.start_point.row).unwrap(),
+                character: u32::try_from(ts_type.start_point.column).unwrap(),
+            },
+            end: lsp_types::Position {
+                line: u32::try_from(ts_type.end_point.row).unwrap(),
+                character: u32::try_from(ts_type.end_point.column).unwrap(),
+            },
+        }
     }
 }

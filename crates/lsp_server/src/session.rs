@@ -14,7 +14,7 @@ use tower_lsp::{
 };
 use tracing::{debug, trace};
 
-use crate::ropey_ext::Endings;
+use crate::ext_traits::Endings;
 
 use self::{
     document_open_state_index::DocumentOpenStateIndex, document_text_index::DocumentTextIndex,

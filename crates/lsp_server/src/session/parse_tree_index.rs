@@ -10,7 +10,7 @@ use tokio::sync::RwLock;
 use tower_lsp::lsp_types::{self, Diagnostic as LspDiagnostic, DiagnosticSeverity, Url};
 use tree_sitter::{InputEdit, Point, Tree};
 
-use crate::ropey_ext::Endings;
+use crate::ext_traits::{Endings, FromTs};
 
 /// Keeps the parse trees for each file we've parsed.
 ///
@@ -99,7 +99,7 @@ fn parsed_diags_to_lsp_diags(diagnostics: Vec<RaDiagnostic<'_>>) -> Vec<LspDiagn
                 }
             };
             LspDiagnostic {
-                range: lsp_range_from_ts_range(ts_diag.range()),
+                range: lsp_types::Range::from_ts(ts_diag.range()),
                 severity: Some(severity),
                 code: None,
                 code_description: None,
@@ -111,17 +111,4 @@ fn parsed_diags_to_lsp_diags(diagnostics: Vec<RaDiagnostic<'_>>) -> Vec<LspDiagn
             }
         })
         .collect()
-}
-
-fn lsp_range_from_ts_range(ts_range: tree_sitter::Range) -> lsp_types::Range {
-    lsp_types::Range {
-        start: lsp_types::Position {
-            line: u32::try_from(ts_range.start_point.row).unwrap(),
-            character: u32::try_from(ts_range.start_point.column).unwrap(),
-        },
-        end: lsp_types::Position {
-            line: u32::try_from(ts_range.end_point.row).unwrap(),
-            character: u32::try_from(ts_range.end_point.column).unwrap(),
-        },
-    }
 }

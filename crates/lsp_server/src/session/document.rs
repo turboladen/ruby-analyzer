@@ -1,7 +1,7 @@
 use ropey::Rope;
 use tower_lsp::lsp_types;
 
-use crate::ropey_ext::GetCharRange;
+use crate::ext_traits::GetCharRange;
 
 /// Mirrors the code/text as it is represented in the client.
 ///

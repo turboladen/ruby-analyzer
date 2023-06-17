@@ -6,7 +6,7 @@ use tokio::sync::RwLock;
 use tower_lsp::lsp_types::Url;
 use tree_sitter::Point;
 
-use crate::ropey_ext::Endings;
+use crate::ext_traits::Endings;
 
 use super::document::Document;
 

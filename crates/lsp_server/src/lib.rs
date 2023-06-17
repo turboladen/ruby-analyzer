@@ -1,5 +1,5 @@
 pub(crate) mod backend;
-pub(crate) mod ropey_ext;
+pub(crate) mod ext_traits;
 pub(crate) mod session;
 
 pub use self::backend::Backend;
