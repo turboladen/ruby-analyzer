@@ -1,3 +1,4 @@
+mod document;
 mod document_open_state_index;
 mod document_text_index;
 mod parse_tree_index;
@@ -20,6 +21,8 @@ use self::{
     parse_tree_index::ParseTreeIndex,
 };
 
+/// A `Session` holds the state of the server.
+///
 pub(crate) struct Session {
     client: Client,
     client_capabilities: RwLock<Option<ClientCapabilities>>,
@@ -44,6 +47,8 @@ impl Session {
         &self.client
     }
 
+    /// Mutable accessor for updating `ClientCapabilities`.
+    ///
     pub(crate) async fn client_capabilities_mut(
         &self,
     ) -> RwLockWriteGuard<Option<ClientCapabilities>> {
@@ -98,6 +103,8 @@ impl Session {
             .await;
     }
 
+    /// Implementation details for handling `LanguageServer::did_change()`.
+    ///
     pub(crate) async fn change_ruby_document(
         &self,
         identifier: VersionedTextDocumentIdentifier,

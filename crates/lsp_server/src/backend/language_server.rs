@@ -7,7 +7,7 @@ use tower_lsp::{
     },
     LanguageServer,
 };
-use tracing::debug;
+use tracing::{debug, trace};
 
 use super::Backend;
 
@@ -51,7 +51,7 @@ const SERVER_CAPABILITIES: ServerCapabilities = ServerCapabilities {
 #[tower_lsp::async_trait]
 impl LanguageServer for Backend {
     async fn initialize(&self, params: InitializeParams) -> Result<InitializeResult> {
-        debug!("Server initializing...");
+        trace!("Server initializing...");
         self.client()
             .log_message(MessageType::INFO, "Initializing server...")
             .await;
@@ -64,12 +64,11 @@ impl LanguageServer for Backend {
                 version: Some(env!("CARGO_PKG_VERSION").to_string()),
             }),
             capabilities: SERVER_CAPABILITIES,
-            // offset_encoding: Some("utf-8".to_string()),
         })
     }
 
     async fn initialized(&self, _: InitializedParams) {
-        debug!("Server initialized");
+        trace!("Server initialized");
 
         self.client()
             .log_message(MessageType::INFO, "ruby_analyzer server initialized")
@@ -77,7 +76,7 @@ impl LanguageServer for Backend {
     }
 
     async fn shutdown(&self) -> Result<()> {
-        debug!("Server shutdown");
+        trace!("Server shutdown");
 
         self.client()
             .log_message(MessageType::INFO, "ruby_analyzer server shut down")

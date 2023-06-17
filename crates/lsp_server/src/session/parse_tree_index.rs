@@ -12,12 +12,19 @@ use tree_sitter::{InputEdit, Point, Tree};
 
 use crate::ropey_ext::Endings;
 
+/// Keeps the parse trees for each file we've parsed.
+///
 #[derive(Default, Clone)]
 pub(crate) struct ParseTreeIndex {
     inner: Arc<DashMap<Url, RwLock<Tree>>>,
 }
 
 impl ParseTreeIndex {
+    /// If the file at `uri` hasn't yet been parsed, it parses that and inserts it into the index.
+    /// If the file at `uri` has been parsed, it uses `position_getter()` to determine the end
+    /// positions (end byte, end position) of the latest code/text so we can incrementally update
+    /// the existing `Tree` that we already have.
+    ///
     pub(crate) async fn do_full_parse<F>(
         &self,
         uri: Url,
@@ -72,6 +79,8 @@ impl ParseTreeIndex {
     }
 }
 
+/// Takes the diagnostics we get from the parser and turns them into `lsp_types::Diagnostic`s.
+///
 fn parsed_diags_to_lsp_diags(diagnostics: Vec<RaDiagnostic<'_>>) -> Vec<LspDiagnostic> {
     const SOURCE: &str = "ruby_analyzer";
 

@@ -1,8 +1,13 @@
+//! This module provides extension traits for making it easier to work with `Rope`s and other types.
+//!
 use ropey::Rope;
 use tower_lsp::lsp_types;
 use tree_sitter::Point;
 
 pub(crate) trait Endings {
+    /// Intended solely to extend `Rope` functionality, this provides a way to get both the offset
+    /// of the last byte of the `Rope`, and the correlating row/column (as a `tree_sitter::Point`).
+    ///
     fn end_byte_and_point(&self) -> (usize, Point);
 }
 
@@ -21,6 +26,10 @@ impl Endings for Rope {
 }
 
 pub(crate) trait GetCharRange {
+    /// Intended to use with `Rope` and `lsp_types::Range`, with the goal of getting the range of
+    /// `char`s represented by the `lsp_types::Range`. When editing/updating a `Rope`, you call
+    /// `remove()` with the range of `char`s represented by the range of text that was changed.
+    ///
     fn get_char_range(&self, lsp_range: &lsp_types::Range) -> std::ops::Range<usize>;
 }
 
@@ -31,6 +40,9 @@ impl GetCharRange for Rope {
 }
 
 pub(crate) trait GetCharOffset {
+    /// This is really just a compliment to `GetCharRange`, providing an ergonomic way to get both
+    /// ends of the `char` range for that call.
+    ///
     fn get_char_offset(&self, lsp_position: &lsp_types::Position) -> usize;
 }
 
