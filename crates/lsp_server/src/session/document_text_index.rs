@@ -1,9 +1,9 @@
-use std::{ops::Deref, sync::Arc};
+use std::sync::Arc;
 
 use dashmap::{mapref::entry::Entry, DashMap};
 use ropey::Rope;
 use tokio::sync::RwLock;
-use tower_lsp::lsp_types::Url;
+use tower_lsp::lsp_types::{TextDocumentContentChangeEvent, Url};
 use tree_sitter::Point;
 
 use crate::ext_traits::Endings;
@@ -49,12 +49,50 @@ impl DocumentTextIndex {
 
         Some(doc.code.end_byte_and_point())
     }
-}
 
-impl Deref for DocumentTextIndex {
-    type Target = Arc<DashMap<Url, RwLock<Document>>>;
+    pub(crate) async fn change_doc(
+        &self,
+        uri: &Url,
+        version: i32,
+        content_changes: &[TextDocumentContentChangeEvent],
+    ) {
+        match self.inner.get(uri) {
+            Some(rw_lock) => {
+                let mut doc = rw_lock.write().await;
 
-    fn deref(&self) -> &Self::Target {
-        &self.inner
+                if version <= doc.version {
+                    // TODO: Handle more gracefully.
+                    panic!("Got update for older doc");
+                }
+
+                for content_change in content_changes {
+                    match content_change.range {
+                        Some(range) => {
+                            doc.merge_for_change_unchecked(version, &range, &content_change.text);
+                        }
+                        None => {
+                            // Set the existing rope to entry.
+                            doc.replace_for_change_unchecked(version, &content_change.text);
+                        }
+                    }
+                }
+            }
+            None => {
+                // TODO: Probably should handle this by just storing the things as if they were new?
+                panic!("Got change notices for unknown doc");
+            }
+        }
+    }
+
+    /// Assumes there is a value for `uri` and returns the document's code.
+    ///
+    pub(crate) async fn get_latest_code_unchecked(&self, uri: &Url) -> Rope {
+        let it = self
+            .inner
+            .get(uri)
+            .expect("Don't call this unless you know there's a value already");
+        let doc = it.read().await;
+
+        doc.code.clone()
     }
 }

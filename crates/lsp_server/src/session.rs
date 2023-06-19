@@ -86,7 +86,7 @@ impl Session {
         // Store the file->tree relationship.
         let diagnostics = self
             .ruby_parse_trees
-            .do_full_parse(text_document_item.uri.clone(), &code, || end_byte_and_point)
+            .do_full_parse(text_document_item.uri.clone(), &code, end_byte_and_point)
             .await;
 
         debug!("Got diagnostics during didOpen: {:?}", &diagnostics);
@@ -110,52 +110,20 @@ impl Session {
         identifier: VersionedTextDocumentIdentifier,
         content_changes: Vec<TextDocumentContentChangeEvent>,
     ) {
-        // TODO: Move to DocumentTextIndex.
-        match self.ruby_document_texts.get(&identifier.uri) {
-            Some(rw_lock) => {
-                let mut doc = rw_lock.write().await;
-
-                if identifier.version <= doc.version {
-                    // TODO: Handle more gracefully.
-                    panic!("Got update for older doc");
-                }
-
-                for content_change in content_changes {
-                    match content_change.range {
-                        Some(range) => {
-                            doc.merge_for_change_unchecked(
-                                identifier.version,
-                                &range,
-                                &content_change.text,
-                            );
-                        }
-                        None => {
-                            // Set the existing rope to entry.
-                            doc.replace_for_change_unchecked(
-                                identifier.version,
-                                &content_change.text,
-                            );
-                        }
-                    }
-                }
-            }
-            None => {
-                // TODO: Probably should handle this by just storing the things as if they were new?
-                panic!("Got change notices for unknown doc");
-            }
-        };
+        self.ruby_document_texts
+            .change_doc(&identifier.uri, identifier.version, &content_changes)
+            .await;
 
         trace!("[didChange] Done updating text");
-        eprintln!("[didChange] Done updating text");
 
-        let rw_lock = self.ruby_document_texts.get(&identifier.uri).unwrap();
-        let doc = rw_lock.read().await;
+        let code = self
+            .ruby_document_texts
+            .get_latest_code_unchecked(&identifier.uri)
+            .await;
 
         let diagnostics = self
             .ruby_parse_trees
-            .do_full_parse(identifier.uri.clone(), doc.code(), || {
-                doc.code.end_byte_and_point()
-            })
+            .do_full_parse(identifier.uri.clone(), &code, code.end_byte_and_point())
             .await;
 
         debug!("Got diagnostics during didChange: {:?}", &diagnostics);

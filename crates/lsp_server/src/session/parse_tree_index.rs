@@ -25,18 +25,15 @@ impl ParseTreeIndex {
     /// positions (end byte, end position) of the latest code/text so we can incrementally update
     /// the existing `Tree` that we already have.
     ///
-    pub(crate) async fn do_full_parse<F>(
+    pub(crate) async fn do_full_parse(
         &self,
         uri: Url,
         code: &Rope,
-        position_getter: F,
-    ) -> Vec<LspDiagnostic>
-    where
-        F: Fn() -> (usize, Point),
-    {
+        old_positions: (usize, Point),
+    ) -> Vec<LspDiagnostic> {
         match self.inner.entry(uri.clone()) {
             Entry::Occupied(entry) => {
-                let (old_end_byte, old_end_position) = position_getter();
+                let (old_end_byte, old_end_position) = old_positions;
                 let (new_end_byte, new_end_position) = code.end_byte_and_point();
 
                 let input_edit = InputEdit {

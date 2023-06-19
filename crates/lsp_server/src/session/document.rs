@@ -12,12 +12,6 @@ pub(crate) struct Document {
 }
 
 impl Document {
-    /// Accessor to the inner `Rope`.
-    ///
-    pub(crate) fn code(&self) -> &Rope {
-        &self.code
-    }
-
     /// Updates the `version` and `code` without checking to see if the given `version` is newer
     /// than `self`'s `version`.
     ///
