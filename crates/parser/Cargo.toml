@@ -1,0 +1,15 @@
+[package]
+name = "ruby_analyzer-tree_sitter_parser"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+ropey.workspace = true
+tracing.workspace = true
+tree-sitter.workspace = true
+tree-sitter-ruby.workspace = true
+
+[dev-dependencies]
+tracing-test.workspace = true

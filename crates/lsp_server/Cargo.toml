@@ -1,0 +1,22 @@
+[package]
+name = "ruby_analyzer-lsp_server"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+# async-lock = "2.7"
+dashmap = "5.4.0"
+ropey.workspace = true
+ruby_analyzer-tree_sitter_parser = { path = "../parser" }
+tokio = { version = "1.17", features = ["full", "tracing", "parking_lot"] }
+tower-lsp = "0.19"
+tracing.workspace = true
+tracing-appender = { version = "0.2.2", features = ["parking_lot"] }
+tracing-log = { version = "0.1" }
+tracing-subscriber = { version = "0.3.17", features = [
+  "parking_lot",
+  "env-filter",
+] }
+tree-sitter.workspace = true
