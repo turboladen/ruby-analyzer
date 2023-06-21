@@ -7,7 +7,10 @@ use ruby_analyzer_tree_sitter_parser::{
     parser::parse,
 };
 use tokio::sync::RwLock;
-use tower_lsp::lsp_types::{self, Diagnostic as LspDiagnostic, DiagnosticSeverity, Url};
+use tower_lsp::{
+    lsp_types::{self, Diagnostic as LspDiagnostic, DiagnosticSeverity, MessageType, Url},
+    Client,
+};
 use tree_sitter::{InputEdit, Point, Tree};
 
 use crate::ext_traits::{Endings, FromTs};
@@ -30,6 +33,7 @@ impl ParseTreeIndex {
         uri: Url,
         code: &Rope,
         old_positions: (usize, Point),
+        client: &Client,
     ) -> Vec<LspDiagnostic> {
         match self.inner.entry(uri.clone()) {
             Entry::Occupied(entry) => {
@@ -49,29 +53,39 @@ impl ParseTreeIndex {
                 old_tree.edit(&input_edit);
 
                 // TODO: I don't think `parse()` needs to care about returning anything else but the Tree.
-                let parse_result = match parse(&code, Some(&old_tree)) {
-                    Some(t) => t,
-                    None => {
-                        // https://docs.rs/tree-sitter/latest/tree_sitter/struct.Parser.html#method.parse
-                        todo!("Tell the client we timed out or got cancelled.")
-                    }
-                };
+                // https://docs.rs/tree-sitter/latest/tree_sitter/struct.Parser.html#method.parse
+                match parse(code, Some(&old_tree)) {
+                    Some(parse_result) => {
+                        *old_tree = parse_result.tree().clone();
 
-                *old_tree = parse_result.tree().clone();
-                parsed_diags_to_lsp_diags(parse_result.diagnostics())
-            }
-            Entry::Vacant(entry) => {
-                let parse_result = match parse(&code, None) {
-                    Some(t) => t,
-                    None => {
-                        // https://docs.rs/tree-sitter/latest/tree_sitter/struct.Parser.html#method.parse
-                        todo!("Tell the client we timed out or got cancelled.")
+                        return parsed_diags_to_lsp_diags(parse_result.diagnostics());
                     }
-                };
-
-                entry.insert(RwLock::new(parse_result.tree().clone()));
-                parsed_diags_to_lsp_diags(parse_result.diagnostics())
+                    None => {
+                        client
+                            .log_message(
+                                MessageType::WARNING,
+                                format!("Parsing file {} timed out", &uri),
+                            )
+                            .await;
+                        vec![]
+                    }
+                }
             }
+            Entry::Vacant(entry) => match parse(code, None) {
+                Some(parse_result) => {
+                    entry.insert(RwLock::new(parse_result.tree().clone()));
+                    return parsed_diags_to_lsp_diags(parse_result.diagnostics());
+                }
+                None => {
+                    client
+                        .log_message(
+                            MessageType::WARNING,
+                            format!("Parsing file {} timed out", &uri),
+                        )
+                        .await;
+                    vec![]
+                }
+            },
         }
     }
 }

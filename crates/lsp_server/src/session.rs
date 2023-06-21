@@ -86,7 +86,12 @@ impl Session {
         // Store the file->tree relationship.
         let diagnostics = self
             .ruby_parse_trees
-            .do_full_parse(text_document_item.uri.clone(), &code, end_byte_and_point)
+            .do_full_parse(
+                text_document_item.uri.clone(),
+                &code,
+                end_byte_and_point,
+                &self.client,
+            )
             .await;
 
         debug!("Got diagnostics during didOpen: {:?}", &diagnostics);
@@ -123,7 +128,12 @@ impl Session {
 
         let diagnostics = self
             .ruby_parse_trees
-            .do_full_parse(identifier.uri.clone(), &code, code.end_byte_and_point())
+            .do_full_parse(
+                identifier.uri.clone(),
+                &code,
+                code.end_byte_and_point(),
+                &self.client,
+            )
             .await;
 
         debug!("Got diagnostics during didChange: {:?}", &diagnostics);
