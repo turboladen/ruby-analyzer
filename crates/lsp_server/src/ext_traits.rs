@@ -14,10 +14,10 @@ pub(crate) trait Endings {
 
 impl Endings for Rope {
     fn end_byte_and_point(&self) -> (usize, Point) {
+        // The end/last byte is also the total number of bytes.
         let end_byte = self.len_bytes();
-
-        // (this is also the number of the last row, - 1)
-        let end_row = self.len_lines();
+        // However, since an empty Rope will return 1 line here, we have to - 1.
+        let end_row = self.len_lines() - 1;
 
         let byte_of_start_of_last_line = self.line_to_byte(end_row);
         let end_column = end_byte - byte_of_start_of_last_line;
@@ -73,4 +73,34 @@ impl FromTs<tree_sitter::Range> for lsp_types::Range {
             },
         }
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    mod endings {
+        use super::*;
+
+        #[test]
+        fn empty_test() {
+            let rope = Rope::from_str("");
+            assert_eq!(rope.len_lines(), 1);
+            assert_eq!(rope.end_byte_and_point(), (0, Point::new(0, 0)));
+        }
+
+        #[test]
+        fn single_line_test() {
+            let rope = Rope::from_str("class Foo; end");
+            assert_eq!(rope.len_lines(), 1);
+            assert_eq!(rope.end_byte_and_point(), (14, Point::new(0, 14)));
+        }
+
+        #[test]
+        fn multi_empty_line_test() {
+            let rope = Rope::from_str("\n\n\n");
+            assert_eq!(rope.len_lines(), 4);
+            assert_eq!(rope.end_byte_and_point(), (3, Point::new(3, 0)));
+        }
+    } /* endings */
 }
