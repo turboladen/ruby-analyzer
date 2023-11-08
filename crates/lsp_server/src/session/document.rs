@@ -27,12 +27,13 @@ impl Document {
         version: i32,
         range: &lsp_types::Range,
         new_text: &str,
-    ) {
+    ) -> Result<(), ropey::Error> {
         self.version = version;
 
-        let char_range = self.code.get_char_range(range);
+        let char_range = self.code.get_char_range(range)?;
         let start = char_range.start;
         self.code.remove(char_range);
         self.code.insert(start, new_text);
+        Ok(())
     }
 }

@@ -31,12 +31,18 @@ pub(crate) trait GetCharRange {
     /// `char`s represented by the `lsp_types::Range`. When editing/updating a `Rope`, you call
     /// `remove()` with the range of `char`s represented by the range of text that was changed.
     ///
-    fn get_char_range(&self, lsp_range: &lsp_types::Range) -> std::ops::Range<usize>;
+    fn get_char_range(
+        &self,
+        lsp_range: &lsp_types::Range,
+    ) -> Result<std::ops::Range<usize>, ropey::Error>;
 }
 
 impl GetCharRange for Rope {
-    fn get_char_range(&self, lsp_range: &lsp_types::Range) -> std::ops::Range<usize> {
-        self.get_char_offset(&lsp_range.start)..self.get_char_offset(&lsp_range.start)
+    fn get_char_range(
+        &self,
+        lsp_range: &lsp_types::Range,
+    ) -> Result<std::ops::Range<usize>, ropey::Error> {
+        Ok(self.get_char_offset(&lsp_range.start)?..self.get_char_offset(&lsp_range.start)?)
     }
 }
 
@@ -44,13 +50,15 @@ pub(crate) trait GetCharOffset {
     /// This is really just a compliment to `GetCharRange`, providing an ergonomic way to get both
     /// ends of the `char` range for that call.
     ///
-    fn get_char_offset(&self, lsp_position: &lsp_types::Position) -> usize;
+    fn get_char_offset(&self, lsp_position: &lsp_types::Position) -> Result<usize, ropey::Error>;
 }
 
 impl GetCharOffset for Rope {
-    fn get_char_offset(&self, lsp_position: &lsp_types::Position) -> usize {
-        self.line_to_char(usize::try_from(lsp_position.line).unwrap())
-            + usize::try_from(lsp_position.character).unwrap()
+    fn get_char_offset(&self, lsp_position: &lsp_types::Position) -> Result<usize, ropey::Error> {
+        Ok(
+            self.try_line_to_char(usize::try_from(lsp_position.line).unwrap())?
+                + usize::try_from(lsp_position.character).unwrap(),
+        )
     }
 }
 
@@ -103,4 +111,11 @@ mod tests {
             assert_eq!(rope.end_byte_and_point(), (3, Point::new(3, 0)));
         }
     } /* endings */
+
+    mod get_char_offset {
+        use super::*;
+
+        #[test]
+        fn function_name_test() {}
+    } /* get_char_offset */
 }
