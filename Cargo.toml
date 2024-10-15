@@ -1,5 +1,6 @@
 [workspace]
 members = ["crates/*", "poc-parsers/*"]
+resolver = "2"
 
 [workspace.dependencies]
 ropey = "1.6.0"

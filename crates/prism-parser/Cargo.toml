@@ -1,0 +1,9 @@
+[package]
+name = "ruby_analyzer-prism_parser"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+prism = { path = "../../../../not_my_projects/prism/rust/prism", default-features = false } # prism = { git = "https://github.com/ruby/prism" }

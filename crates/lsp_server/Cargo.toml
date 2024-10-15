@@ -9,7 +9,7 @@ edition = "2021"
 # async-lock = "2.7"
 dashmap = "5.4.0"
 ropey.workspace = true
-ruby_analyzer-tree_sitter_parser = { path = "../parser" }
+ruby_analyzer-tree_sitter_parser = { path = "../tree-sitter-parser" }
 tokio = { version = "1.17", features = ["full", "tracing", "parking_lot"] }
 tower-lsp = "0.19"
 tracing.workspace = true
